@@ -14,21 +14,20 @@ function smoothstep(a: number, b: number, x: number) {
 }
 
 export function MotionOrbitRings() {
-  const elapsed = useMotionStore((s) => s.elapsed);
   const state = useMotionStore((s) => s.state);
-  const showOrbitRings = useMotionStore((s) => s.showOrbitRings);
+  const transitionProgress = useMotionStore((s) => s.transitionProgress);
 
-  // Authoritative (0–2s): 1.0
-  // Ghost (2–5.5s): 1.0 -> 0.3
-  // Gone (5.5–11s): 0.3 -> 0.0
   const opacity = useMemo(() => {
     if (state === "idle") return 0;
-    if (state === "interactive") return showOrbitRings ? 0.22 : 0;
-    if (elapsed <= 2.0) return 1.0;
-    if (elapsed <= 5.5) return THREE.MathUtils.lerp(1.0, 0.3, smoothstep(2.0, 5.5, elapsed));
-    if (elapsed <= 11.0) return THREE.MathUtils.lerp(0.3, 0.0, smoothstep(5.5, 11.0, elapsed));
+    if (state === "motion_interactive") return 0;
+    if (state === "transitioning_to_motion") {
+      return THREE.MathUtils.lerp(1.0, 0.0, smoothstep(0, 1, transitionProgress));
+    }
+    if (state === "transitioning_to_normal") {
+      return THREE.MathUtils.lerp(0.0, 1.0, smoothstep(0, 1, transitionProgress));
+    }
     return 0.0;
-  }, [elapsed, showOrbitRings, state]);
+  }, [state, transitionProgress]);
 
   const planets = useMemo(() => bodies.filter((b) => b.type === "planet" || b.type === "dwarf_planet"), []);
 

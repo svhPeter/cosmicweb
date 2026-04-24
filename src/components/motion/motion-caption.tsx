@@ -6,19 +6,16 @@ import { useMotionStore } from "@/stores/motion";
 
 export function MotionCaption() {
   const state = useMotionStore((s) => s.state);
-  const elapsed = useMotionStore((s) => s.elapsed);
+  const transitionProgress = useMotionStore((s) => s.transitionProgress);
 
   const captions = [
-    { at: 0.8, until: 2.0, text: "The view you know." },
-    { at: 3.5, until: 5.5, text: "But the Sun is moving too." },
-    { at: 7.5, until: 10.5, text: "Planets trace helices through space." },
-    { at: 11.5, until: 14.0, text: "Every point in space, visited only once." },
+    { at: 0.05, until: 0.42, text: "Shifting from orbit map to motion view." },
+    { at: 0.4, until: 0.9, text: "The Sun carries the system through space." },
   ] as const;
 
-  const active =
-    state === "entering" || state === "playing"
-      ? captions.find((c) => elapsed >= c.at && elapsed <= c.until) ?? null
-      : null;
+  const active = state === "transitioning_to_motion"
+    ? captions.find((c) => transitionProgress >= c.at && transitionProgress <= c.until) ?? null
+    : null;
 
   return (
     <AnimatePresence>

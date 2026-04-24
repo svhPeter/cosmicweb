@@ -9,8 +9,6 @@ import { ExploreSidebar } from "@/components/space/explore-sidebar";
 import { SelectionPanel } from "@/components/space/selection-panel";
 import { SceneErrorBoundary } from "@/components/space/scene-error-boundary";
 import { useMotionStore } from "@/stores/motion";
-import { MotionCaption } from "@/components/motion/motion-caption";
-import { MotionControls } from "@/components/motion/motion-controls";
 import { AccuracyLayer } from "@/components/motion/accuracy-layer";
 
 export default function Experience() {
@@ -18,7 +16,7 @@ export default function Experience() {
   const [introActive, setIntroActive] = useState(false);
   const motionState = useMotionStore((s) => s.state);
   const motionActive = motionState !== "idle";
-  const motionInteractive = motionState === "interactive";
+  const motionInteractive = motionState === "motion_interactive";
 
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden bg-background">
@@ -89,17 +87,6 @@ export default function Experience() {
                 ].join(" ")}
               >
                 <SelectionPanel />
-              </div>
-
-              <MotionCaption />
-
-              <div
-                className={[
-                  "absolute bottom-6 left-1/2 z-30 -translate-x-1/2 transition-opacity duration-500",
-                  motionInteractive ? "opacity-100" : "opacity-0 pointer-events-none",
-                ].join(" ")}
-              >
-                <MotionControls />
               </div>
 
               <div

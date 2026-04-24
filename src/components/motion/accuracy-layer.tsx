@@ -11,7 +11,7 @@ export function AccuracyLayer({ className }: { className?: string }) {
   const open = useMotionStore((s) => s.accuracyOpen);
   const setOpen = useMotionStore((s) => s.setAccuracyOpen);
 
-  if (state !== "interactive") return null;
+  if (state !== "motion_interactive") return null;
 
   return (
     <>

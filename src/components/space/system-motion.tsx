@@ -8,12 +8,14 @@ import { bodies } from "@/data-static/bodies";
 import { bodyPositions, useExploreStore } from "@/store/explore-store";
 import { useMotionStore } from "@/stores/motion";
 
-const WARMUP_SUBSTEPS = 5; // faster trail fill when enabling Motion
-const TRAIL_POINTS = 700;
+const WARMUP_SUBSTEPS = 4;
+const TRAIL_POINTS = 720;
+const FORWARD_UNITS_PER_STEP = 0.33;
 
 type Trail = {
   geom: THREE.BufferGeometry;
   ring: Float32Array;
+  lead: Float32Array;
   draw: Float32Array;
   colors: Float32Array;
   base: THREE.Color;
@@ -23,20 +25,21 @@ type Trail = {
 
 function makeTrail(n: number, base: THREE.Color): Trail {
   const ring = new Float32Array(n * 3);
+  const lead = new Float32Array(n);
   const draw = new Float32Array(n * 3);
   const colors = new Float32Array(n * 3);
   const geom = new THREE.BufferGeometry();
   geom.setAttribute("position", new THREE.BufferAttribute(draw, 3));
   geom.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   geom.setDrawRange(0, 0);
-  return { geom, ring, draw, colors, base, cursor: 0, count: 0 };
+  return { geom, ring, lead, draw, colors, base, cursor: 0, count: 0 };
 }
 
 export function SystemMotion() {
   const speed = useExploreStore((s) => s.speed);
   const playing = useExploreStore((s) => s.playing);
   const motionState = useMotionStore((s) => s.state);
-  const motionElapsed = useMotionStore((s) => s.elapsed);
+  const transitionProgress = useMotionStore((s) => s.transitionProgress);
 
   const entries = useMemo(
     () =>
@@ -49,13 +52,13 @@ export function SystemMotion() {
         })),
     []
   );
-  const ids = useMemo(() => entries.map((e) => e.id), [entries]);
   const trailsRef = useRef<Map<string, Trail>>(new Map());
-  const tRef = useRef(0);
-  const startedRef = useRef(false);
+  const warmupTimeRef = useRef(0);
+  const forwardStepRef = useRef(0);
 
   useEffect(() => {
-    tRef.current = 0;
+    warmupTimeRef.current = 0;
+    forwardStepRef.current = 0;
     for (const [, trail] of trailsRef.current) {
       trail.cursor = 0;
       trail.count = 0;
@@ -68,8 +71,8 @@ export function SystemMotion() {
       new THREE.LineBasicMaterial({
         vertexColors: true,
         transparent: true,
-        opacity: 0.16,
-        color: "#e6edf6",
+        opacity: 0.25,
+        color: "#6f97ff",
         depthTest: true,
         depthWrite: false,
         fog: false,
@@ -81,11 +84,11 @@ export function SystemMotion() {
   const pointsMat = useMemo(
     () =>
       new THREE.PointsMaterial({
-        size: 2.35,
+        size: 2.5,
         sizeAttenuation: true,
         vertexColors: true,
         transparent: true,
-        opacity: 0.88,
+        opacity: 0.64,
         depthTest: true,
         depthWrite: false,
         fog: false,
@@ -98,21 +101,8 @@ export function SystemMotion() {
     () =>
       new THREE.LineBasicMaterial({
         transparent: true,
-        opacity: 0.22,
-        color: "#e9f1fb",
-        depthTest: true,
-        depthWrite: false,
-        fog: false,
-      }),
-    []
-  );
-
-  const matFaint = useMemo(
-    () =>
-      new THREE.LineBasicMaterial({
-        transparent: true,
-        opacity: 0.10,
-        color: "#e6edf6",
+        opacity: 0.2,
+        color: "#c3d8ff",
         depthTest: true,
         depthWrite: false,
         fog: false,
@@ -120,45 +110,6 @@ export function SystemMotion() {
       }),
     []
   );
-
-  const axis = useMemo(() => {
-    const geom = new THREE.BufferGeometry();
-    const pos = new Float32Array(2 * 3);
-    geom.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    geom.setDrawRange(0, 2);
-    const m = new THREE.LineBasicMaterial({
-      transparent: true,
-      opacity: 0.22,
-      color: "#cfd9e6",
-      depthTest: true,
-      depthWrite: false,
-      fog: false,
-      blending: THREE.AdditiveBlending,
-    });
-    return new THREE.Line(geom, m);
-  }, []);
-
-  const axisTicks = useMemo(() => {
-    const geom = new THREE.BufferGeometry();
-    const n = 120;
-    const pos = new Float32Array(n * 3);
-    const col = new Float32Array(n * 3);
-    geom.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    geom.setAttribute("color", new THREE.BufferAttribute(col, 3));
-    geom.setDrawRange(0, n);
-    const mat = new THREE.PointsMaterial({
-      size: 1.25,
-      sizeAttenuation: true,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.65,
-      depthTest: true,
-      depthWrite: false,
-      fog: false,
-      blending: THREE.AdditiveBlending,
-    });
-    return new THREE.Points(geom, mat);
-  }, []);
 
   const lines = useMemo(() => {
     const group = new THREE.Group();
@@ -173,53 +124,49 @@ export function SystemMotion() {
     return group;
   }, [entries, mat, pointsMat, lineCleanMat]);
 
+  const blend =
+    motionState === "transitioning_to_motion"
+      ? transitionProgress
+      : motionState === "motion_interactive"
+        ? 1
+        : motionState === "transitioning_to_normal"
+          ? 1 - transitionProgress
+          : 0;
+
+  const revealBlend =
+    motionState === "transitioning_to_motion"
+      ? transitionProgress
+      : motionState === "motion_interactive"
+        ? 1
+        : motionState === "transitioning_to_normal"
+          ? 1 - transitionProgress
+          : 0;
+
   useFrame((_, delta) => {
-    const allowRecord = motionState === "playing" && motionElapsed >= 2.0;
-    if (!allowRecord) {
-      if (startedRef.current) {
-        // Reset buffers when leaving the recording window.
-        startedRef.current = false;
-        tRef.current = 0;
-        for (const [, trail] of trailsRef.current) {
-          trail.cursor = 0;
-          trail.count = 0;
-          trail.geom.setDrawRange(0, 0);
-        }
+    if (motionState === "idle") {
+      warmupTimeRef.current = 0;
+      forwardStepRef.current = 0;
+      for (const [, trail] of trailsRef.current) {
+        trail.cursor = 0;
+        trail.count = 0;
+        trail.geom.setDrawRange(0, 0);
       }
       return;
     }
-    startedRef.current = true;
+
+    const easedReveal = revealBlend * revealBlend * (3 - 2 * revealBlend);
+    mat.opacity = 0.04 + 0.29 * easedReveal;
+    lineCleanMat.opacity = 0.06 + 0.2 * easedReveal;
+    pointsMat.opacity = 0.06 + 0.64 * easedReveal;
+
     if (!playing || speed <= 0) return;
 
-    // Trails start after the \"break\" begins; they should become legible within seconds.
-    const substeps = tRef.current < 1.8 ? WARMUP_SUBSTEPS : 1;
+    warmupTimeRef.current += delta;
+    const substeps = warmupTimeRef.current < 1.6 ? WARMUP_SUBSTEPS : 1;
     const dt = (delta * speed) / substeps;
 
     for (let step = 0; step < substeps; step++) {
-      tRef.current += dt;
-      // Update the forward axis so it always passes through the moving Sun.
-      const sun = bodyPositions.get("sun");
-      if (sun) {
-        const axisAttr = axis.geometry.getAttribute("position") as THREE.BufferAttribute;
-        axisAttr.setXYZ(0, sun.x - 220, sun.y, sun.z);
-        axisAttr.setXYZ(1, sun.x + 520, sun.y, sun.z);
-        axisAttr.needsUpdate = true;
-
-        const tickPos = axisTicks.geometry.getAttribute("position") as THREE.BufferAttribute;
-        const tickCol = axisTicks.geometry.getAttribute("color") as THREE.BufferAttribute;
-        const n = tickPos.count;
-        for (let i = 0; i < n; i++) {
-          const t = (i / (n - 1)) * 1.0;
-          const x = sun.x - 160 + t * 520;
-          const wobble = Math.sin(i * 12.7) * 0.6;
-          tickPos.setXYZ(i, x, sun.y + wobble * 0.15, sun.z + wobble);
-          const a = 0.08 + 0.22 * Math.pow(t, 1.6);
-          tickCol.setXYZ(i, a, a, a);
-        }
-        tickPos.needsUpdate = true;
-        tickCol.needsUpdate = true;
-      }
-
+      forwardStepRef.current += dt / (1 / 60);
       for (const e of entries) {
         const id = e.id;
         const p = bodyPositions.get(id);
@@ -231,6 +178,7 @@ export function SystemMotion() {
         trail.ring[idx] = p.x;
         trail.ring[idx + 1] = p.y;
         trail.ring[idx + 2] = p.z;
+        trail.lead[trail.cursor] = forwardStepRef.current;
 
         const n = trail.ring.length / 3;
         trail.cursor = (trail.cursor + 1) % n;
@@ -238,20 +186,22 @@ export function SystemMotion() {
 
         // Re-pack into a contiguous draw range (no per-frame allocations).
         const start = trail.cursor % n; // oldest sample
+        const oldestLead = trail.lead[start] ?? 0;
         // Outer-orbit trails are dimmer to avoid chaos.
-        const orbitFade = THREE.MathUtils.clamp(1.0 - Math.max(0, e.orbitAu - 2.0) * 0.058, 0.35, 1.0);
+        const orbitFade = THREE.MathUtils.clamp(1.0 - Math.max(0, e.orbitAu - 1.8) * 0.074, 0.22, 1.0);
 
         for (let i = 0; i < trail.count; i++) {
-          const src = ((start + i) % n) * 3;
+          const srcIndex = (start + i) % n;
+          const src = srcIndex * 3;
           const dst = i * 3;
-          trail.draw[dst] = trail.ring[src] ?? 0;
+          const leadDelta = ((trail.lead[srcIndex] ?? oldestLead) - oldestLead) * FORWARD_UNITS_PER_STEP;
+          trail.draw[dst] = (trail.ring[src] ?? 0) + leadDelta;
           trail.draw[dst + 1] = trail.ring[src + 1] ?? 0;
           trail.draw[dst + 2] = trail.ring[src + 2] ?? 0;
 
           // Fade tail → head (older points dimmer).
           const age = trail.count > 1 ? i / (trail.count - 1) : 1;
-          // Stronger head, cleaner tail.
-          const a = (0.03 + 0.97 * Math.pow(age, 2.35)) * orbitFade;
+          const a = (0.08 + 0.82 * Math.pow(age, 1.92)) * orbitFade;
           trail.colors[dst] = trail.base.r * a;
           trail.colors[dst + 1] = trail.base.g * a;
           trail.colors[dst + 2] = trail.base.b * a;
@@ -261,17 +211,12 @@ export function SystemMotion() {
         posAttr.needsUpdate = true;
         const colAttr = trail.geom.getAttribute("color") as THREE.BufferAttribute;
         colAttr.needsUpdate = true;
-        trail.geom.setDrawRange(0, trail.count);
+        const revealCount = Math.max(2, Math.floor(trail.count * easedReveal));
+        trail.geom.setDrawRange(0, Math.min(trail.count, revealCount));
       }
     }
   });
 
-  return (
-    <group>
-      <primitive object={axis} />
-      <primitive object={axisTicks} />
-      <primitive object={lines} />
-    </group>
-  );
+  return blend <= 0.001 ? null : <primitive object={lines} />;
 }
 

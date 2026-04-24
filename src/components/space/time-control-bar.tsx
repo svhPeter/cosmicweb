@@ -41,38 +41,42 @@ export function TimeControlBar({ className }: { className?: string }) {
       role="group"
       aria-label="Simulation time controls"
     >
-      <button
-        type="button"
-        onClick={() => stepSpeed(-1)}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/5 text-muted-foreground hover:text-foreground transition"
-        aria-label="Slower"
-      >
-        <Rewind className="h-3.5 w-3.5" />
-      </button>
-      <button
-        type="button"
-        onClick={togglePlaying}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background transition hover:bg-foreground/90"
-        aria-label={playing ? "Pause" : "Play"}
-      >
-        {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-      </button>
-      <button
-        type="button"
-        onClick={() => stepSpeed(1)}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/5 text-muted-foreground hover:text-foreground transition"
-        aria-label="Faster"
-      >
-        <FastForward className="h-3.5 w-3.5" />
-      </button>
+      {!showMotion ? (
+        <>
+          <button
+            type="button"
+            onClick={() => stepSpeed(-1)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/5 text-muted-foreground hover:text-foreground transition"
+            aria-label="Slower"
+          >
+            <Rewind className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={togglePlaying}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background transition hover:bg-foreground/90"
+            aria-label={playing ? "Pause" : "Play"}
+          >
+            {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => stepSpeed(1)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/5 text-muted-foreground hover:text-foreground transition"
+            aria-label="Faster"
+          >
+            <FastForward className="h-3.5 w-3.5" />
+          </button>
 
-      <div className="mx-2 h-4 w-px bg-border" aria-hidden />
+          <div className="mx-2 h-4 w-px bg-border" aria-hidden />
 
-      <span className="px-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground tabular-nums whitespace-nowrap">
-        {speed}× speed
-      </span>
+          <span className="px-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground tabular-nums whitespace-nowrap">
+            {speed}× speed
+          </span>
 
-      <div className="mx-1 h-4 w-px bg-border" aria-hidden />
+          <div className="mx-1 h-4 w-px bg-border" aria-hidden />
+        </>
+      ) : null}
 
       <button
         type="button"

@@ -11,10 +11,18 @@ import { useMotionStore } from "@/stores/motion";
 
 const INTRO_SEEN_KEY = "cosmos.explore.introSeen.v1";
 
-const V_TOP_DOWN = new THREE.Vector3(0, 50, 0);
-const V_THREE_QUARTER = new THREE.Vector3(0, 30, 40);
-const V_NEAR_SIDE = new THREE.Vector3(0, 9, 55);
-const V_FINAL = new THREE.Vector3(0, 7.5, 58);
+const NORMAL_OVERVIEW_POS = new THREE.Vector3(0, 16, 34);
+const NORMAL_OVERVIEW_TARGET = new THREE.Vector3(0, 0, 0);
+const MOTION_OFFSET_DIRECTION = new THREE.Vector3(-0.82, 0.31, 0.48).normalize();
+const MOTION_MIN_DISTANCE = 56;
+const MOTION_MAX_DISTANCE = 182;
+const MOTION_TARGET_LEAD = new THREE.Vector3(6.2, 0, 0);
+const MOTION_TRANSITION_SECONDS = 2.5;
+
+function easeInOutCubic(t: number): number {
+  // Smootherstep for premium settle (zero slope at start/end).
+  return t * t * t * (t * (t * 6 - 15) + 10);
+}
 
 /**
  * Smooth camera controller that preserves user freedom.
@@ -37,26 +45,18 @@ export function CameraController({
   const focusedId = useExploreStore((s) => s.focusedBodyId);
   const showMotion = useExploreStore((s) => s.showMotion);
   const motionState = useMotionStore((s) => s.state);
-  const motionElapsed = useMotionStore((s) => s.elapsed);
-  const motionTick = useMotionStore((s) => s.tick);
-  const motionFromPos = useRef(new THREE.Vector3());
+  const setTransitionProgress = useMotionStore((s) => s.setTransitionProgress);
+  const completeTransition = useMotionStore((s) => s.completeTransition);
 
-  const overviewPos = useRef(new THREE.Vector3(0, 16, 34));
-  const overviewTarget = useRef(new THREE.Vector3(0, 0, 0));
-  const baseOverviewPos = useRef(new THREE.Vector3(0, 16, 34));
-  const baseOverviewTarget = useRef(new THREE.Vector3(0, 0, 0));
-
-  // Educational explainer view for Motion mode:
-  // side-oblique, with the +X direction reading as the forward travel axis.
-  // This is an *offset* from the Sun (which moves forward in Motion mode).
-  // Slightly more side-on than normal mode so the helix reads instantly.
-  const motionOffset = useRef(new THREE.Vector3(-150, 44, 28));
+  const overviewPos = useRef(NORMAL_OVERVIEW_POS.clone());
+  const overviewTarget = useRef(NORMAL_OVERVIEW_TARGET.clone());
 
   const interacting = useRef(false);
 
   const prevTarget = useRef(new THREE.Vector3(0, 0, 0));
   const nextTarget = useRef(new THREE.Vector3(0, 0, 0));
   const deltaTarget = useRef(new THREE.Vector3(0, 0, 0));
+  const prevSunWorld = useRef<THREE.Vector3 | null>(null);
 
   const transition = useRef<{
     active: boolean;
@@ -70,6 +70,28 @@ export function CameraController({
     duration: 0.9,
     from: new THREE.Vector3(0, 16, 34),
     to: new THREE.Vector3(0, 16, 34),
+  });
+
+  const modeTransition = useRef<{
+    active: boolean;
+    type: "to_motion" | "to_normal" | null;
+    elapsed: number;
+    duration: number;
+    fromPos: THREE.Vector3;
+    fromTarget: THREE.Vector3;
+    toPos: THREE.Vector3;
+    toTarget: THREE.Vector3;
+    startSun: THREE.Vector3;
+  }>({
+    active: false,
+    type: null,
+    elapsed: 0,
+    duration: MOTION_TRANSITION_SECONDS,
+    fromPos: new THREE.Vector3(),
+    fromTarget: new THREE.Vector3(),
+    toPos: new THREE.Vector3(),
+    toTarget: new THREE.Vector3(),
+    startSun: new THREE.Vector3(),
   });
 
   const intro = useRef<{
@@ -117,6 +139,48 @@ export function CameraController({
       controls.removeEventListener("end", onEnd);
     };
   }, [controlsRef]);
+
+  function startMotionTransition(type: "to_motion" | "to_normal", controls: OrbitControlsImpl) {
+    const fromPos = camera.position.clone();
+    const fromTarget = controls.target.clone();
+    const sun = bodyPositions.get("sun") ?? new THREE.Vector3(0, 0, 0);
+
+    let toTarget = new THREE.Vector3();
+    let toPos = new THREE.Vector3();
+
+    if (type === "to_motion") {
+      const currentDistance = Math.max(fromPos.distanceTo(fromTarget), 1);
+      const motionDistance = THREE.MathUtils.clamp(currentDistance * 1.35, MOTION_MIN_DISTANCE, MOTION_MAX_DISTANCE);
+      toTarget.copy(sun).add(MOTION_TARGET_LEAD);
+      toPos.copy(sun).addScaledVector(MOTION_OFFSET_DIRECTION, motionDistance);
+    } else {
+      const body = focusedId ? bodies.find((b) => b.id === focusedId) : null;
+      const isFocus = !!body && body.type !== "star";
+      const liveFocus = isFocus && focusedId ? bodyPositions.get(focusedId) : null;
+      const focusTarget = liveFocus ?? overviewTarget.current;
+
+      const lookDir = fromPos.clone().sub(fromTarget).normalize();
+      const desiredDistance = isFocus ? Math.max((body?.render.relativeSize ?? 1) * 3.8, 4.2) : 38;
+
+      toTarget.copy(focusTarget);
+      toPos.copy(focusTarget).add(lookDir.multiplyScalar(desiredDistance));
+    }
+
+    modeTransition.current = {
+      active: true,
+      type,
+      elapsed: 0,
+      duration: MOTION_TRANSITION_SECONDS,
+      fromPos,
+      fromTarget,
+      toPos,
+      toTarget,
+      startSun: sun.clone(),
+    };
+    controls.enabled = false;
+    setTransitionProgress(0);
+    interacting.current = false;
+  }
 
   // Cinematic intro sweep: once per user (skip on return), and skippable immediately.
   useEffect(() => {
@@ -186,6 +250,8 @@ export function CameraController({
   useEffect(() => {
     const body = focusedId ? bodies.find((b) => b.id === focusedId) : null;
     const controls = controlsRef.current;
+    if (!controls) return;
+    if (motionState !== "idle") return;
 
     const isFocus = !!body && body.type !== "star";
     const live = isFocus && focusedId ? bodyPositions.get(focusedId) : null;
@@ -214,46 +280,15 @@ export function CameraController({
     };
 
     // Premium zoom bounds: tighter in focus, wider in overview.
-    if (controls) {
-      if (isFocus) {
-        const minD = Math.max(body.render.relativeSize * 1.35, 2.8);
-        controls.minDistance = minD;
-        controls.maxDistance = Math.max(minD * 24, 80);
-      } else {
-        controls.minDistance = 6;
-        controls.maxDistance = 320;
-      }
-    }
-  }, [focusedId, camera, controlsRef]);
-
-  // When Motion turns on (and we're in overview), gently bias the overview framing
-  // so the +X travel direction reads immediately (doesn't fight user input).
-  useEffect(() => {
-    if (focusedId) return;
-    const controls = controlsRef.current;
-    if (!controls) return;
-
-    if (showMotion) {
-      const sun = bodyPositions.get("sun");
-      const target = sun ?? tmpA.current.set(0, 0, 0);
-      overviewTarget.current.copy(target);
-      overviewPos.current.copy(target).add(motionOffset.current);
+    if (isFocus) {
+      const minD = Math.max(body.render.relativeSize * 1.35, 2.8);
+      controls.minDistance = minD;
+      controls.maxDistance = Math.max(minD * 24, 80);
     } else {
-      overviewPos.current.copy(baseOverviewPos.current);
-      overviewTarget.current.copy(baseOverviewTarget.current);
+      controls.minDistance = 6;
+      controls.maxDistance = 320;
     }
-
-    transition.current = {
-      active: true,
-      t: 0,
-      duration: 0.85,
-      from: camera.position.clone(),
-      to: overviewPos.current.clone(),
-    };
-
-    controls.target.copy(overviewTarget.current);
-    controls.update();
-  }, [showMotion, focusedId, camera, controlsRef]);
+  }, [focusedId, camera, controlsRef, motionState]);
 
   // ESC to exit focus.
   useEffect(() => {
@@ -270,10 +305,6 @@ export function CameraController({
   useFrame((_, delta) => {
     const controls = controlsRef.current;
     if (!controls) return;
-
-    if (motionState !== "idle") {
-      motionTick(delta);
-    }
 
     // Intro sweep timeline (3–5s), then handoff to OrbitControls.
     if (intro.current.active) {
@@ -308,43 +339,39 @@ export function CameraController({
       return;
     }
 
-    // Motion-mode (Phase 3): full cinematic camera choreography (beats 1–4).
-    if (showMotion && (motionState === "entering" || motionState === "playing")) {
-      const sun = bodyPositions.get("sun") ?? tmpA.current.set(0, 0, 0);
-      controls.enabled = false;
-
-      // Ease helper.
-      const ease = (t: number) => t * t * (3.0 - 2.0 * t);
-      const seg = (a: number, b: number) => ease(THREE.MathUtils.clamp((motionElapsed - a) / (b - a), 0, 1));
-
-      const offset = tmpC.current;
-      if (motionElapsed <= 2.0) {
-        // Beat 1: settle to top-down (0–2s).
-        if (motionElapsed < 0.05) motionFromPos.current.copy(camera.position);
-        const t = ease(THREE.MathUtils.clamp(motionElapsed / 1.5, 0, 1));
-        const targetPos = tmpB.current.copy(sun).add(V_TOP_DOWN);
-        camera.position.lerpVectors(motionFromPos.current, targetPos, t);
-      } else if (motionElapsed <= 5.5) {
-        // Beat 2: tilt to three-quarter (2–5.5s).
-        offset.lerpVectors(V_TOP_DOWN, V_THREE_QUARTER, seg(2.0, 5.5));
-        camera.position.copy(sun).add(offset);
-      } else if (motionElapsed <= 11.0) {
-        // Beat 3: tilt to near-side (5.5–11s).
-        offset.lerpVectors(V_THREE_QUARTER, V_NEAR_SIDE, seg(5.5, 11.0));
-        camera.position.copy(sun).add(offset);
-      } else {
-        // Beat 4: settle final shot (11–14s).
-        offset.lerpVectors(V_NEAR_SIDE, V_FINAL, seg(11.0, 14.0));
-        camera.position.copy(sun).add(offset);
-      }
-
-      controls.target.copy(sun);
-      camera.lookAt(sun);
-      controls.update();
-      return;
-    } else {
-      controls.enabled = true;
+    if (motionState === "transitioning_to_motion" && (!modeTransition.current.active || modeTransition.current.type !== "to_motion")) {
+      startMotionTransition("to_motion", controls);
+    } else if (
+      motionState === "transitioning_to_normal" &&
+      (!modeTransition.current.active || modeTransition.current.type !== "to_normal")
+    ) {
+      startMotionTransition("to_normal", controls);
     }
+
+    if (modeTransition.current.active) {
+      const mt = modeTransition.current;
+      mt.elapsed = Math.min(mt.elapsed + delta, mt.duration);
+      const progress = mt.duration <= 0 ? 1 : mt.elapsed / mt.duration;
+      const eased = easeInOutCubic(progress);
+      const sunNow = bodyPositions.get("sun");
+      const sunDelta = sunNow ? tmpA.current.copy(sunNow).sub(mt.startSun) : tmpA.current.set(0, 0, 0);
+
+      camera.position.lerpVectors(mt.fromPos, mt.toPos, eased).add(sunDelta);
+      controls.target.lerpVectors(mt.fromTarget, mt.toTarget, eased).add(sunDelta);
+      camera.lookAt(controls.target);
+      controls.update();
+
+      setTransitionProgress(progress);
+      if (progress >= 1) {
+        mt.active = false;
+        mt.type = null;
+        controls.enabled = true;
+        completeTransition();
+      }
+      return;
+    }
+
+    controls.enabled = true;
 
     // Keep target stable and free-orbit-friendly:
     // if the focused body moves, translate camera+target by the same delta.
@@ -358,41 +385,36 @@ export function CameraController({
         camera.position.add(deltaTarget.current);
       }
     } else {
-      // In Motion explainer mode, allow calm free exploration after the cinematic.
-      if (showMotion && motionState === "interactive") {
-        const sun = bodyPositions.get("sun");
-        if (sun && !interacting.current) {
-          // Keep the target gently biased toward the Sun so orbits stay readable.
-          controls.target.lerp(sun, 1 - Math.pow(0.02, delta));
-
-          // After a short idle, drift back toward the final "teaching" framing without snapping.
-          const idleMs = performance.now() - lastInteractAtMs.current;
-          if (idleMs > 5000) {
-            const desired = tmpA.current.copy(sun).add(V_FINAL);
-            camera.position.lerp(desired, 1 - Math.pow(0.03, delta));
-          }
-        }
-      } else if (showMotion) {
-        // During non-interactive motion beats, keep camera framed relative to the moving Sun.
+      if (showMotion && motionState === "motion_interactive") {
         const sun = bodyPositions.get("sun");
         if (sun) {
-          controls.target.copy(sun);
-          camera.position.lerp(tmpA.current.copy(sun).add(motionOffset.current), 1 - Math.pow(0.001, delta));
-          controls.update();
-          return;
+          if (prevSunWorld.current) {
+            deltaTarget.current.subVectors(sun, prevSunWorld.current);
+            controls.target.add(deltaTarget.current);
+            camera.position.add(deltaTarget.current);
+            if (!interacting.current && performance.now() - lastInteractAtMs.current > 4500) {
+              // Keep the Sun as the compositional anchor during idle inspect mode.
+              controls.target.lerp(sun.clone().add(MOTION_TARGET_LEAD), 1 - Math.pow(0.08, delta));
+            }
+          }
+          if (!prevSunWorld.current) prevSunWorld.current = sun.clone();
+          else prevSunWorld.current.copy(sun);
         }
+      } else if (showMotion) {
+        prevSunWorld.current = null;
+      } else {
+        prevSunWorld.current = null;
+        // In overview, gently drift target back to origin to avoid "lost target"
+        // after panning, but keep it subtle.
+        prevTarget.current.copy(controls.target);
+        controls.target.lerp(overviewTarget.current, 1 - Math.pow(0.001, delta));
+        deltaTarget.current.subVectors(controls.target, prevTarget.current);
+        camera.position.add(deltaTarget.current);
       }
-
-      // In overview, gently drift target back to origin to avoid "lost target"
-      // after panning, but keep it subtle.
-      prevTarget.current.copy(controls.target);
-      controls.target.lerp(overviewTarget.current, 1 - Math.pow(0.001, delta));
-      deltaTarget.current.subVectors(controls.target, prevTarget.current);
-      camera.position.add(deltaTarget.current);
     }
 
     // One-shot transition framing (never fights the user while dragging).
-    if (transition.current.active && !interacting.current) {
+    if (transition.current.active && !interacting.current && motionState === "idle") {
       const tr = transition.current;
       tr.t = Math.min(tr.t + delta / tr.duration, 1);
       const e = tr.t * tr.t * (3 - 2 * tr.t); // smoothstep

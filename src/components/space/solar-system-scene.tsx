@@ -125,7 +125,7 @@ export function SolarSystemScene({
         <OrbitControls
           ref={controlsRef}
           enabled={interactive}
-          enablePan={!showMotion}
+          enablePan
           screenSpacePanning
           enableDamping
           dampingFactor={0.08}

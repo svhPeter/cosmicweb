@@ -1,0 +1,110 @@
+"use client";
+
+import { create } from "zustand";
+import * as THREE from "three";
+
+export type ScaleMode = "visual" | "realistic";
+
+/**
+ * Store for the /explore scene.
+ *
+ * Intentionally small and typed. Purely ephemeral per-frame data (each
+ * planet's current world position) is kept in a singleton Map that lives
+ * *outside* Zustand — writing to the store every frame for every body
+ * would thrash subscribers. Consumers who need a live position read the
+ * registry directly via `bodyPositions.get(id)`.
+ */
+interface ExploreState {
+  /** Body id currently focused by the camera (null = overview). */
+  focusedBodyId: string | null;
+  /** Body id currently selected (panel shown). */
+  selectedBodyId: string | null;
+  /** Body id being hovered (for tooltip / highlight). */
+  hoveredBodyId: string | null;
+
+  /** Playback controls. */
+  playing: boolean;
+  speed: number;
+  scaleMode: ScaleMode;
+
+  /** Simulation time in Julian days (floating). */
+  simulationJd: number;
+
+  /**
+   * Whether to use accurate Keplerian orbits for bodies that have elements.
+   * When `false`, the scene uses the stylised circular layout — the default
+   * for readability. When `true`, positions come from the Kepler solver.
+   */
+  useRealOrbits: boolean;
+
+  /** Optional educational viz: system drifting through space. */
+  showMotion: boolean;
+
+  setFocused: (id: string | null) => void;
+  setSelected: (id: string | null) => void;
+  setHovered: (id: string | null) => void;
+  togglePlaying: () => void;
+  setPlaying: (v: boolean) => void;
+  setSpeed: (v: number) => void;
+  setScaleMode: (m: ScaleMode) => void;
+  setSimulationJd: (jd: number) => void;
+  setUseRealOrbits: (v: boolean) => void;
+  setShowMotion: (v: boolean) => void;
+  reset: () => void;
+}
+
+/**
+ * Today's JD — refreshed at module load. For long-lived tabs this is fine
+ * because the simulation clock advances itself inside useFrame.
+ */
+function jdNow(): number {
+  return Date.now() / 86_400_000 + 2_440_587.5;
+}
+
+export const useExploreStore = create<ExploreState>((set) => ({
+  focusedBodyId: null,
+  selectedBodyId: null,
+  hoveredBodyId: null,
+  playing: true,
+  speed: 1,
+  scaleMode: "visual",
+  simulationJd: jdNow(),
+  useRealOrbits: false,
+  showMotion: false,
+
+  setFocused: (id) => set({ focusedBodyId: id }),
+  setSelected: (id) => set({ selectedBodyId: id, focusedBodyId: id ?? null }),
+  setHovered: (id) => set({ hoveredBodyId: id }),
+  togglePlaying: () => set((s) => ({ playing: !s.playing })),
+  setPlaying: (v) => set({ playing: v }),
+  setSpeed: (v) => set({ speed: Math.max(0, Math.min(8, v)) }),
+  setScaleMode: (m) => set({ scaleMode: m }),
+  setSimulationJd: (jd) => set({ simulationJd: jd }),
+  setUseRealOrbits: (v) => set({ useRealOrbits: v }),
+  setShowMotion: (v) => set({ showMotion: v }),
+  reset: () =>
+    set({
+      focusedBodyId: null,
+      selectedBodyId: null,
+      hoveredBodyId: null,
+      playing: true,
+      speed: 1,
+      simulationJd: jdNow(),
+    }),
+}));
+
+/**
+ * Per-frame position registry. Planets write to this from useFrame; the
+ * camera controller reads from it. Lives outside Zustand to avoid per-frame
+ * subscriber churn.
+ */
+export const bodyPositions = new Map<string, THREE.Vector3>();
+
+export function reportBodyPosition(id: string, v: THREE.Vector3): void {
+  let existing = bodyPositions.get(id);
+  if (!existing) {
+    existing = new THREE.Vector3();
+    bodyPositions.set(id, existing);
+  }
+  existing.copy(v);
+}

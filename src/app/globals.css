@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Cosmos palette — editorial dark-only.
+       HSL components (no alpha) so Tailwind can mix with opacity. */
+    --background: 225 35% 4%;       /* near-black with a slight navy cool */
+    --foreground: 210 20% 96%;
+    --muted: 225 14% 12%;
+    --muted-foreground: 220 10% 66%;
+    --border: 225 18% 14%;
+    --panel: 225 28% 7%;
+    --accent: 190 96% 62%;          /* subtle electric cyan */
+    --accent-soft: 190 70% 38%;
+    --accent-foreground: 225 40% 6%;
+    --danger: 0 72% 58%;
+    --success: 150 60% 48%;
+
+    /* Status colors (semantic; separate from brand accent). */
+    --status-live: 150 60% 48%;
+    --status-cache: 220 18% 62%;
+    --status-stale: 40 85% 60%;
+    --status-fallback: 38 92% 62%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    color-scheme: dark;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "ss01", "cv11";
+    font-variant-ligatures: common-ligatures contextual;
+  }
+
+  h1, h2, h3, h4 {
+    font-variant-ligatures: common-ligatures discretionary-ligatures;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: hsl(var(--accent) / 0.25);
+    color: hsl(var(--foreground));
+  }
+
+  /* Focus ring — accessible, subtle, accent-aware. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--accent));
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  /* Reduced motion respect. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  .cosmos-grid-bg {
+    background-image:
+      radial-gradient(ellipse 60% 40% at 50% 0%, hsl(var(--accent) / 0.08), transparent 70%),
+      radial-gradient(ellipse 40% 30% at 100% 100%, hsl(var(--accent-soft) / 0.05), transparent 70%);
+  }
+
+  .cosmos-hairline {
+    background-image: linear-gradient(
+      to right,
+      transparent 0%,
+      hsl(var(--border)) 20%,
+      hsl(var(--border)) 80%,
+      transparent 100%
+    );
+  }
+
+  .cosmos-panel {
+    background: hsl(var(--panel) / 0.75);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid hsl(var(--border));
+    border-radius: 16px;
+  }
+
+  .cosmos-kbd {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+    background: hsl(var(--muted));
+  }
+
+  .cosmos-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid hsl(var(--border));
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+    background: hsl(var(--panel) / 0.6);
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
+  }
+
+  /* Editorial rhythm tokens — standardised vertical spacing between major
+     sections across the product. Keeps rhythm consistent without scattering
+     magic numbers through pages. */
+  .section-y {
+    padding-top: clamp(4rem, 8vw, 7rem);
+    padding-bottom: clamp(4rem, 8vw, 7rem);
+  }
+  .section-y-tight {
+    padding-top: clamp(3rem, 6vw, 5rem);
+    padding-bottom: clamp(3rem, 6vw, 5rem);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  .bg-noise {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1  0 0 0 0 0.1  0 0 0 0 0.15  0 0 0 0.35 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+}

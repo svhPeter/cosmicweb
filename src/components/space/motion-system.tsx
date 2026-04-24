@@ -34,8 +34,7 @@ export function MotionSystem() {
   const playing = useExploreStore((s) => s.playing);
   const motionState = useMotionStore((s) => s.state);
   const showOrbitRings = useMotionStore((s) => s.showOrbitRings);
-
-  const tRef = useRef(0);
+  const motionElapsed = useMotionStore((s) => s.elapsed);
 
   const sun = useMemo(() => bodies.find((b) => b.type === "star") ?? null, []);
   const planets = useMemo(() => bodies.filter((b) => b.type === "planet" || b.type === "dwarf_planet"), []);
@@ -43,10 +42,18 @@ export function MotionSystem() {
 
   useFrame((_, delta) => {
     if (!systemRef.current) return;
-    if (playing) tRef.current += delta * speed;
 
-    // Translate the whole system forward (Sun carries the frame).
-    const d = tRef.current * SUN_SCENE_UNITS_PER_SECOND;
+    // Translate the whole system forward during the guided reveal only.
+    // Important: drive distance from the cinematic timeline (seconds), not sim speed,
+    // otherwise the system can drift thousands of units and become uninspectable.
+    const revealSeconds = THREE.MathUtils.clamp(motionElapsed - 2.0, 0, 12.0); // 2s–14s window
+    const revealD = revealSeconds * SUN_SCENE_UNITS_PER_SECOND;
+    const d =
+      motionState === "entering" || motionState === "playing"
+        ? revealD
+        : // In interactive mode we keep the frame settled and centered for inspection.
+          // Trails already captured during the reveal remain as the teaching artifact.
+          0;
     systemRef.current.position.copy(DIR).multiplyScalar(d);
 
     // Report Sun world position so the camera/trails can track it.

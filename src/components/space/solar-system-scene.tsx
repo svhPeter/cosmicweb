@@ -13,20 +13,7 @@ import { Sun } from "@/components/space/sun";
 import { Planet } from "@/components/space/planet";
 import { CameraController } from "@/components/space/camera-controller";
 import { useExploreStore } from "@/store/explore-store";
-import { SystemMotion } from "@/components/space/system-motion";
-import { MotionSystem } from "@/components/space/motion-system";
 
-/**
- * Visual tuning constants — not to scale. A to-scale solar system is
- * unreadable on a screen. These values produce a composition where each
- * planet reads clearly, orbits nest gracefully, and the scene feels calm.
- *
- *   ORBIT_SCALE        scene-units per AU (visual-mode orbit radius)
- *   AU_TO_SCENE        scene-units per AU (realistic mode — log-compressed)
- *   SIZE_SCALE         scene-units per "relative Earth radius" render hint
- *   MIN_PLANET_SIZE    readability floor so Mercury stays visible
- *   SUN_RADIUS         composed to feel correct relative to inner planets
- */
 const ORBIT_SCALE = 6.8;
 const AU_TO_SCENE = 4.2;
 const SIZE_SCALE = 0.55;
@@ -49,7 +36,6 @@ export function SolarSystemScene({
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const [highPerf, setHighPerf] = useState(true);
   const useRealOrbits = useExploreStore((s) => s.useRealOrbits);
-  const showMotion = useExploreStore((s) => s.showMotion);
 
   const sun = bodies.find((b) => b.type === "star");
   const planets = bodies.filter((b) => b.type === "planet" || b.type === "dwarf_planet");
@@ -70,57 +56,47 @@ export function SolarSystemScene({
         <AdaptiveEvents />
 
         <ambientLight intensity={0.07} />
-        {/* Subtle fill from the camera direction — gives planets a rim
-            highlight without washing out the sun's directional shading. */}
         <hemisphereLight args={["#d0d8e6", "#0a0e1a", 0.24]} />
 
         <Suspense fallback={null}>
           <SpaceEnvironment />
           <Starfield />
 
-          {showMotion ? (
-            <MotionSystem />
-          ) : (
-            <>
-              {sun ? <Sun body={sun} radius={SUN_RADIUS} /> : null}
+          {sun ? <Sun body={sun} radius={SUN_RADIUS} /> : null}
 
-              {planets.map((body, i) => {
-                const visualRadius = body.render.orbitAu * ORBIT_SCALE;
-                const visualSpeed = body.render.orbitalPeriodYears
-                  ? 0.12 / Math.sqrt(body.render.orbitalPeriodYears)
-                  : 0.04;
-                const visualPhase = (i / planets.length) * Math.PI * 2 + i * 0.37;
-                const realisticRadius = body.orbitalElements
-                  ? body.orbitalElements.semiMajorAxisAu * AU_TO_SCENE
-                  : visualRadius;
-                const orbitRadius = useRealOrbits && body.orbitalElements ? realisticRadius : visualRadius;
+          {planets.map((body, i) => {
+            const visualRadius = body.render.orbitAu * ORBIT_SCALE;
+            const visualSpeed = body.render.orbitalPeriodYears
+              ? 0.12 / Math.sqrt(body.render.orbitalPeriodYears)
+              : 0.04;
+            const visualPhase = (i / planets.length) * Math.PI * 2 + i * 0.37;
+            const realisticRadius = body.orbitalElements
+              ? body.orbitalElements.semiMajorAxisAu * AU_TO_SCENE
+              : visualRadius;
+            const orbitRadius = useRealOrbits && body.orbitalElements ? realisticRadius : visualRadius;
 
-                return (
-                  <group key={body.id}>
-                    <OrbitLine
-                      bodyId={body.id}
-                      radius={orbitRadius}
-                      orbitAu={body.render.orbitAu}
-                      elements={useRealOrbits ? body.orbitalElements : undefined}
-                      auToScene={AU_TO_SCENE}
-                    />
-                    <Planet
-                      body={body}
-                      visualOrbitRadius={visualRadius}
-                      visualPhase={visualPhase}
-                      visualAngularSpeed={visualSpeed}
-                      auToSceneUnits={AU_TO_SCENE}
-                      sizeScale={SIZE_SCALE}
-                      minSize={MIN_PLANET_SIZE}
-                    />
-                  </group>
-                );
-              })}
-            </>
-          )}
+            return (
+              <group key={body.id}>
+                <OrbitLine
+                  bodyId={body.id}
+                  radius={orbitRadius}
+                  orbitAu={body.render.orbitAu}
+                  elements={useRealOrbits ? body.orbitalElements : undefined}
+                  auToScene={AU_TO_SCENE}
+                />
+                <Planet
+                  body={body}
+                  visualOrbitRadius={visualRadius}
+                  visualPhase={visualPhase}
+                  visualAngularSpeed={visualSpeed}
+                  auToSceneUnits={AU_TO_SCENE}
+                  sizeScale={SIZE_SCALE}
+                  minSize={MIN_PLANET_SIZE}
+                />
+              </group>
+            );
+          })}
         </Suspense>
-
-        {showMotion ? <SystemMotion /> : null}
 
         <OrbitControls
           ref={controlsRef}
@@ -129,19 +105,18 @@ export function SolarSystemScene({
           screenSpacePanning
           enableDamping
           dampingFactor={0.08}
-          rotateSpeed={showMotion ? 0.45 : 0.6}
-          zoomSpeed={showMotion ? 0.65 : 0.85}
+          rotateSpeed={0.6}
+          zoomSpeed={0.85}
           panSpeed={0.55}
           minPolarAngle={0.02}
           maxPolarAngle={Math.PI - 0.02}
-          minDistance={showMotion ? 14 : 6}
-          maxDistance={showMotion ? 260 : 320}
+          minDistance={6}
+          maxDistance={320}
           makeDefault
         />
         <CameraController controlsRef={controlsRef} onIntroActiveChange={onIntroActiveChange} />
       </Canvas>
 
-      {/* Ambient bottom glow — reads as a distant nebula horizon. */}
       <div
         className="pointer-events-none absolute inset-0"
         aria-hidden
@@ -150,7 +125,6 @@ export function SolarSystemScene({
             "radial-gradient(ellipse 80% 50% at 50% 120%, rgba(158, 241, 255, 0.08), transparent 60%)",
         }}
       />
-      {/* Subtle vignette for editorial framing. */}
       <div
         className="pointer-events-none absolute inset-0"
         aria-hidden

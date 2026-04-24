@@ -8,15 +8,10 @@ import { ExploreHud } from "@/components/space/explore-hud";
 import { ExploreSidebar } from "@/components/space/explore-sidebar";
 import { SelectionPanel } from "@/components/space/selection-panel";
 import { SceneErrorBoundary } from "@/components/space/scene-error-boundary";
-import { useMotionStore } from "@/stores/motion";
-import { AccuracyLayer } from "@/components/motion/accuracy-layer";
 
 export default function Experience() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [introActive, setIntroActive] = useState(false);
-  const motionState = useMotionStore((s) => s.state);
-  const motionActive = motionState !== "idle";
-  const motionInteractive = motionState === "motion_interactive";
 
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden bg-background">
@@ -36,7 +31,6 @@ export default function Experience() {
                 <ExploreHud onToggleSidebar={() => setSidebarOpen((v) => !v)} sidebarOpen={sidebarOpen} />
               </div>
 
-              {/* Desktop sidebar: always visible */}
               <div
                 className={[
                   "pointer-events-none absolute left-6 top-24 z-20 hidden lg:block transition-opacity duration-700",
@@ -46,7 +40,6 @@ export default function Experience() {
                 <ExploreSidebar />
               </div>
 
-              {/* Mobile/tablet sidebar: toggled drawer from the left */}
               <div
                 className={[
                   "pointer-events-none absolute left-4 top-20 z-20 transition-all duration-300 lg:hidden",
@@ -62,7 +55,6 @@ export default function Experience() {
                 </div>
               </div>
 
-              {/* Mobile sidebar toggle button */}
               <button
                 type="button"
                 onClick={() => setSidebarOpen((v) => !v)}
@@ -87,15 +79,6 @@ export default function Experience() {
                 ].join(" ")}
               >
                 <SelectionPanel />
-              </div>
-
-              <div
-                className={[
-                  "absolute bottom-6 left-6 z-30 transition-opacity duration-500",
-                  motionInteractive ? "opacity-100" : "opacity-0 pointer-events-none",
-                ].join(" ")}
-              >
-                <AccuracyLayer />
               </div>
             </>
           }

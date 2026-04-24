@@ -25,7 +25,6 @@ import { orbitalSpeedKmS } from "@/lib/space/speeds";
  */
 export function SelectionPanel() {
   const selectedId = useExploreStore((s) => s.selectedBodyId);
-  const showMotion = useExploreStore((s) => s.showMotion);
   const setSelected = useExploreStore((s) => s.setSelected);
   const clearSelected = () => setSelected(null);
 
@@ -67,9 +66,6 @@ export function SelectionPanel() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedId, prev, next, setSelected]);
-
-  // In Motion explainer mode, prioritize the visualization (panel can obscure trails).
-  if (showMotion) return null;
 
   return (
     <AnimatePresence mode="wait">

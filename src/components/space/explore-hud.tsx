@@ -7,7 +7,7 @@ import { useExploreStore } from "@/store/explore-store";
 import { bodies } from "@/data-static/bodies";
 import { TimeControlBar } from "@/components/space/time-control-bar";
 import { SimulationClock } from "@/components/space/simulation-clock";
-import { orbitalSpeedKmS, SUN_GALACTIC_SPEED_KM_S } from "@/lib/space/speeds";
+import { orbitalSpeedKmS } from "@/lib/space/speeds";
 import { formatNumber } from "@/lib/utils";
 
 interface ExploreHudProps {
@@ -21,7 +21,6 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
   const setSelected = useExploreStore((s) => s.setSelected);
   const setFocused = useExploreStore((s) => s.setFocused);
   const useRealOrbits = useExploreStore((s) => s.useRealOrbits);
-  const showMotion = useExploreStore((s) => s.showMotion);
   const primaryId = selectedId ?? focusedId;
   const primary = primaryId ? bodies.find((b) => b.id === primaryId) : null;
   const v = primary ? orbitalSpeedKmS(primary) : null;
@@ -56,11 +55,6 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
             <span className="cosmos-chip tabular-nums">
               System · Orbit speed <span className="text-foreground/90">{formatNumber(v, 1)} km/s</span>{" "}
               <span className="text-muted-foreground/70">avg</span>
-            </span>
-          ) : showMotion ? (
-            <span className="cosmos-chip tabular-nums">
-              Educational motion view · Orbit + forward motion · Not to scale (concept) ·{" "}
-              {formatNumber(SUN_GALACTIC_SPEED_KM_S, 0)} km/s <span className="text-muted-foreground/70">approx</span>
             </span>
           ) : null}
           <span className="hidden cosmos-chip sm:inline-flex">

@@ -37,9 +37,6 @@ interface ExploreState {
    */
   useRealOrbits: boolean;
 
-  /** Optional educational viz: system drifting through space. */
-  showMotion: boolean;
-
   setFocused: (id: string | null) => void;
   setSelected: (id: string | null) => void;
   setHovered: (id: string | null) => void;
@@ -49,7 +46,6 @@ interface ExploreState {
   setScaleMode: (m: ScaleMode) => void;
   setSimulationJd: (jd: number) => void;
   setUseRealOrbits: (v: boolean) => void;
-  setShowMotion: (v: boolean) => void;
   reset: () => void;
 }
 
@@ -70,7 +66,6 @@ export const useExploreStore = create<ExploreState>((set) => ({
   scaleMode: "visual",
   simulationJd: jdNow(),
   useRealOrbits: false,
-  showMotion: false,
 
   setFocused: (id) => set({ focusedBodyId: id }),
   setSelected: (id) => set({ selectedBodyId: id, focusedBodyId: id ?? null }),
@@ -81,7 +76,6 @@ export const useExploreStore = create<ExploreState>((set) => ({
   setScaleMode: (m) => set({ scaleMode: m }),
   setSimulationJd: (jd) => set({ simulationJd: jd }),
   setUseRealOrbits: (v) => set({ useRealOrbits: v }),
-  setShowMotion: (v) => set({ showMotion: v }),
   reset: () =>
     set({
       focusedBodyId: null,

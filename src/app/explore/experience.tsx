@@ -27,8 +27,8 @@ export default function Experience() {
             <>
               <div
                 className={[
-                  "transition-all duration-700",
-                  introActive || motionActive
+                  "relative z-20 transition-all duration-700",
+                  introActive
                     ? "translate-y-2 opacity-0 pointer-events-none"
                     : "translate-y-0 opacity-100",
                 ].join(" ")}
@@ -39,8 +39,8 @@ export default function Experience() {
               {/* Desktop sidebar: always visible */}
               <div
                 className={[
-                  "pointer-events-none absolute left-6 top-24 z-10 hidden lg:block transition-opacity duration-700",
-                  motionActive ? "opacity-0 pointer-events-none" : "opacity-100",
+                  "pointer-events-none absolute left-6 top-24 z-20 hidden lg:block transition-opacity duration-700",
+                  introActive ? "opacity-0" : "opacity-100",
                 ].join(" ")}
               >
                 <ExploreSidebar />
@@ -49,8 +49,8 @@ export default function Experience() {
               {/* Mobile/tablet sidebar: toggled drawer from the left */}
               <div
                 className={[
-                  "pointer-events-none absolute left-4 top-20 z-10 transition-all duration-300 lg:hidden",
-                  motionActive ? "-translate-x-3 opacity-0 pointer-events-none" : "",
+                  "pointer-events-none absolute left-4 top-20 z-20 transition-all duration-300 lg:hidden",
+                  introActive ? "opacity-0" : "",
                   sidebarOpen
                     ? "translate-x-0 opacity-100"
                     : "-translate-x-3 opacity-0 pointer-events-none",
@@ -69,8 +69,8 @@ export default function Experience() {
                 aria-label={sidebarOpen ? "Hide body list" : "Show body list"}
                 aria-expanded={sidebarOpen}
                 className={[
-                  "pointer-events-auto absolute left-4 top-20 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full cosmos-panel lg:hidden transition-opacity duration-700",
-                  introActive || motionActive ? "opacity-0 pointer-events-none" : "opacity-100",
+                  "pointer-events-auto absolute left-4 top-20 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full cosmos-panel lg:hidden transition-opacity duration-700",
+                  introActive ? "opacity-0 pointer-events-none" : "opacity-100",
                 ].join(" ")}
               >
                 {sidebarOpen ? (
@@ -82,8 +82,8 @@ export default function Experience() {
 
               <div
                 className={[
-                  "transition-opacity duration-700",
-                  introActive || motionActive ? "opacity-0 pointer-events-none" : "opacity-100",
+                  "relative z-20 transition-opacity duration-700",
+                  introActive ? "opacity-0 pointer-events-none" : "opacity-100",
                 ].join(" ")}
               >
                 <SelectionPanel />

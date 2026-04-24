@@ -28,7 +28,7 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
 
   return (
     <>
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-4 px-4 pt-4 sm:px-6 sm:pt-6">
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-4 px-4 pt-4 sm:px-6 sm:pt-6">
         <Link
           href="/"
           className="pointer-events-auto inline-flex items-center gap-1.5 cosmos-chip transition-colors hover:text-foreground"
@@ -69,7 +69,7 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
         </div>
       </header>
 
-      <footer className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col items-center gap-3 px-4 pb-4 sm:gap-4 sm:px-6 sm:pb-6">
+      <footer className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-3 px-4 pb-4 sm:gap-4 sm:px-6 sm:pb-6">
         <TimeControlBar className="pointer-events-auto" />
         <p className="hidden text-[11px] uppercase tracking-[0.22em] text-muted-foreground/70 md:block">
           Drag to orbit · scroll to zoom · click a planet to focus ·{" "}

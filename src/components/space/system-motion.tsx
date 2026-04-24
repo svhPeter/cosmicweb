@@ -10,12 +10,10 @@ import { useMotionStore } from "@/stores/motion";
 
 const WARMUP_SUBSTEPS = 4;
 const TRAIL_POINTS = 720;
-const FORWARD_UNITS_PER_STEP = 0.33;
 
 type Trail = {
   geom: THREE.BufferGeometry;
   ring: Float32Array;
-  lead: Float32Array;
   draw: Float32Array;
   colors: Float32Array;
   base: THREE.Color;
@@ -25,14 +23,13 @@ type Trail = {
 
 function makeTrail(n: number, base: THREE.Color): Trail {
   const ring = new Float32Array(n * 3);
-  const lead = new Float32Array(n);
   const draw = new Float32Array(n * 3);
   const colors = new Float32Array(n * 3);
   const geom = new THREE.BufferGeometry();
   geom.setAttribute("position", new THREE.BufferAttribute(draw, 3));
   geom.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   geom.setDrawRange(0, 0);
-  return { geom, ring, lead, draw, colors, base, cursor: 0, count: 0 };
+  return { geom, ring, draw, colors, base, cursor: 0, count: 0 };
 }
 
 export function SystemMotion() {
@@ -54,11 +51,9 @@ export function SystemMotion() {
   );
   const trailsRef = useRef<Map<string, Trail>>(new Map());
   const warmupTimeRef = useRef(0);
-  const forwardStepRef = useRef(0);
 
   useEffect(() => {
     warmupTimeRef.current = 0;
-    forwardStepRef.current = 0;
     for (const [, trail] of trailsRef.current) {
       trail.cursor = 0;
       trail.count = 0;
@@ -145,7 +140,6 @@ export function SystemMotion() {
   useFrame((_, delta) => {
     if (motionState === "idle") {
       warmupTimeRef.current = 0;
-      forwardStepRef.current = 0;
       for (const [, trail] of trailsRef.current) {
         trail.cursor = 0;
         trail.count = 0;
@@ -166,7 +160,6 @@ export function SystemMotion() {
     const dt = (delta * speed) / substeps;
 
     for (let step = 0; step < substeps; step++) {
-      forwardStepRef.current += dt / (1 / 60);
       for (const e of entries) {
         const id = e.id;
         const p = bodyPositions.get(id);
@@ -178,7 +171,6 @@ export function SystemMotion() {
         trail.ring[idx] = p.x;
         trail.ring[idx + 1] = p.y;
         trail.ring[idx + 2] = p.z;
-        trail.lead[trail.cursor] = forwardStepRef.current;
 
         const n = trail.ring.length / 3;
         trail.cursor = (trail.cursor + 1) % n;
@@ -186,7 +178,6 @@ export function SystemMotion() {
 
         // Re-pack into a contiguous draw range (no per-frame allocations).
         const start = trail.cursor % n; // oldest sample
-        const oldestLead = trail.lead[start] ?? 0;
         // Outer-orbit trails are dimmer to avoid chaos.
         const orbitFade = THREE.MathUtils.clamp(1.0 - Math.max(0, e.orbitAu - 1.8) * 0.074, 0.22, 1.0);
 
@@ -194,8 +185,7 @@ export function SystemMotion() {
           const srcIndex = (start + i) % n;
           const src = srcIndex * 3;
           const dst = i * 3;
-          const leadDelta = ((trail.lead[srcIndex] ?? oldestLead) - oldestLead) * FORWARD_UNITS_PER_STEP;
-          trail.draw[dst] = (trail.ring[src] ?? 0) + leadDelta;
+          trail.draw[dst] = trail.ring[src] ?? 0;
           trail.draw[dst + 1] = trail.ring[src + 1] ?? 0;
           trail.draw[dst + 2] = trail.ring[src + 2] ?? 0;
 

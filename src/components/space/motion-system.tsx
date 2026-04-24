@@ -13,6 +13,7 @@ import { useMotionStore } from "@/stores/motion";
 
 const DIR = new THREE.Vector3(1, 0, 0);
 const MOTION_FORWARD_OFFSET = 18;
+const MOTION_FORWARD_UNITS_PER_SECOND = 2.2;
 const MOTION_ROT_X = -0.54;
 const MOTION_ROT_Z = 0.24;
 
@@ -36,6 +37,7 @@ export function MotionSystem() {
   const sun = useMemo(() => bodies.find((b) => b.type === "star") ?? null, []);
   const planets = useMemo(() => bodies.filter((b) => b.type === "planet" || b.type === "dwarf_planet"), []);
   const sunWorld = useRef(new THREE.Vector3());
+  const forward = useRef(0);
 
   const motionBlend =
     motionState === "transitioning_to_motion"
@@ -46,10 +48,16 @@ export function MotionSystem() {
           ? 1 - transitionProgress
           : 0;
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (!systemRef.current) return;
+    if (motionBlend <= 0.001) forward.current = 0;
+    if (motionState === "motion_interactive") {
+      forward.current += delta * MOTION_FORWARD_UNITS_PER_SECOND;
+    }
     const eased = 1 - Math.pow(1 - motionBlend, 3);
-    systemRef.current.position.copy(DIR).multiplyScalar(MOTION_FORWARD_OFFSET * eased);
+    systemRef.current.position
+      .copy(DIR)
+      .multiplyScalar(MOTION_FORWARD_OFFSET * eased + forward.current);
     systemRef.current.rotation.set(MOTION_ROT_X * eased, 0, MOTION_ROT_Z * eased);
 
     // Report Sun world position so the camera/trails can track it.

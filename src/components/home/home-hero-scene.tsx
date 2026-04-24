@@ -1,13 +1,15 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Suspense, useMemo, useRef } from "react";
+import { AdaptiveDpr, AdaptiveEvents, PerformanceMonitor } from "@react-three/drei";
+import { Suspense, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
 import { bodies } from "@/data-static/bodies";
 import { Starfield } from "@/components/space/starfield";
 import { SpaceEnvironment } from "@/components/space/space-environment";
 import { Earth } from "@/components/space/earth";
+import { useDeviceTier } from "@/lib/use-device-tier";
 
 /**
  * Homepage hero: a full-bleed Earth beauty-shot.
@@ -17,16 +19,28 @@ import { Earth } from "@/components/space/earth";
 export function HomeHeroScene() {
   const earth = bodies.find((b) => b.id === "earth");
   const sun = bodies.find((b) => b.type === "star");
+  const tier = useDeviceTier();
+  const [highPerf, setHighPerf] = useState(true);
+
+  // Same budgeting posture as the Explore scene but tuned for a still-life
+  // hero: smaller star count (narrower field of view), lower DPR ceiling.
+  const tierDpr: [number, number] =
+    tier === "low" ? [1, 1.35] : tier === "medium" ? [1, 1.6] : [1, 2];
+  const starfieldCount = tier === "low" ? 900 : tier === "medium" ? 1500 : 2200;
 
   return (
     <Canvas
-      dpr={[1, 2]}
+      dpr={highPerf ? tierDpr : [1, Math.min(tierDpr[1], 1.25)]}
       camera={{ position: [-6, 2.2, 18], fov: 34, near: 0.1, far: 1400 }}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      gl={{ antialias: tier !== "low", powerPreference: "high-performance" }}
       style={{ pointerEvents: "none" }}
     >
       <color attach="background" args={["#04060b"]} />
       <fog attach="fog" args={["#04060b", 60, 220]} />
+
+      <PerformanceMonitor onDecline={() => setHighPerf(false)} />
+      <AdaptiveDpr pixelated={false} />
+      <AdaptiveEvents />
 
       <ambientLight intensity={0.04} />
       {/* Sun light from camera-left for a classic Earth beauty-shot. */}
@@ -41,7 +55,7 @@ export function HomeHeroScene() {
 
       <Suspense fallback={null}>
         <SpaceEnvironment />
-        <Starfield count={2200} radius={260} />
+        <Starfield count={starfieldCount} radius={260} />
         <HeroMotion />
 
         {earth ? (

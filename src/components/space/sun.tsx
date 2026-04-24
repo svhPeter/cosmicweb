@@ -62,7 +62,8 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
   );
   const chromoMat = useMemo<ChromosphereMat>(() => makeChromosphereMaterial(body.render.colorHex), [body.render.colorHex]);
   const coronaMat = useMemo<CoronaMat>(() => makeCoronaMaterial(body.render.colorHex), [body.render.colorHex]);
-  const origin = useRef(new THREE.Vector3(0, 0, 0));
+  const rootRef = useRef<THREE.Group>(null);
+  const worldPos = useRef(new THREE.Vector3());
 
   useFrame((_, delta) => {
     const t = performance.now() * 0.001;
@@ -86,13 +87,18 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
     // Keep the corona plane facing the camera so it reads from any angle.
     if (coronaRef.current) coronaRef.current.lookAt(camera.position);
 
-    reportBodyPosition(body.id, origin.current);
+    // Report the real world position so lighting and the camera controller
+    // stay correct when the heliocentric frame drifts through space.
+    if (rootRef.current) {
+      rootRef.current.getWorldPosition(worldPos.current);
+      reportBodyPosition(body.id, worldPos.current);
+    }
   });
 
   const emissive = body.render.emissiveHex ?? body.render.colorHex;
 
   return (
-    <group>
+    <group ref={rootRef}>
       {/* Core — animated granulation shader. */}
       <mesh
         ref={coreRef}

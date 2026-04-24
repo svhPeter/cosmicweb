@@ -28,6 +28,12 @@ const mono = JetBrains_Mono({
 export const viewport: Viewport = {
   themeColor: "#05070d",
   colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
+  // `viewportFit: cover` lets `env(safe-area-inset-*)` reach real values
+  // on iOS Safari / PWAs — required for the explore HUD's safe-area
+  // paddings to actually clear the notch and home indicator.
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {

@@ -4,6 +4,8 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
+import { galacticState } from "@/store/galactic-state";
+
 /**
  * Lightweight procedural starfield. Uses a single points geometry with
  * attribute buffers so rendering cost stays flat no matter how far the
@@ -17,7 +19,11 @@ export function Starfield({ count = 5200, radius = 520 }: { count?: number; radi
     const sizes = new Float32Array(count);
     const colors = new Float32Array(count * 3);
     const color = new THREE.Color();
-    const galacticNormal = new THREE.Vector3(0.22, 0.86, 0.46).normalize();
+    // Galactic plane aligned with the world horizon (Y up). The
+    // heliocentric frame tilts by 60° when the galactic view engages —
+    // having the Milky Way stripe horizontal is what lets the user *see*
+    // the tilt happen (ecliptic leaves the horizon, galaxy remains level).
+    const galacticNormal = new THREE.Vector3(0, 1, 0);
     const pN = new THREE.Vector3();
     for (let i = 0; i < count; i++) {
       // Uniform distribution on a sphere (Marsaglia-style).
@@ -62,8 +68,12 @@ export function Starfield({ count = 5200, radius = 520 }: { count?: number; radi
 
   useFrame((_, delta) => {
     if (!pointsRef.current) return;
-    pointsRef.current.rotation.y += delta * 0.0045;
-    pointsRef.current.rotation.x += delta * 0.0008;
+    // In the galactic frame the camera flies past a fixed distant sky, so
+    // the starfield's idle rotation is eased out — it would otherwise
+    // subtly fight the "we're moving past the stars" parallax cue.
+    const idle = 1 - galacticState.revealT;
+    pointsRef.current.rotation.y += delta * 0.0045 * idle;
+    pointsRef.current.rotation.x += delta * 0.0008 * idle;
   });
 
   return (

@@ -18,5 +18,3 @@ export function orbitalSpeedKmS(body: CelestialBody): number | null {
   return (2 * Math.PI * aKm) / T;
 }
 
-export const SUN_GALACTIC_SPEED_KM_S = 220;
-

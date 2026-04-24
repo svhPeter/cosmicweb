@@ -37,6 +37,15 @@ interface ExploreState {
    */
   useRealOrbits: boolean;
 
+  /**
+   * Whether the scene is rendered in the galactic frame of reference. When
+   * on, the Sun (and the planets with it) drift along the Sun's galactic
+   * motion axis, planets leave helical trails in world space, orbit rings
+   * fade, and parallax dust streams past. This is a peer toggle to
+   * `useRealOrbits` — both upgrade the scene toward physical truth.
+   */
+  galactic: boolean;
+
   setFocused: (id: string | null) => void;
   setSelected: (id: string | null) => void;
   setHovered: (id: string | null) => void;
@@ -46,6 +55,7 @@ interface ExploreState {
   setScaleMode: (m: ScaleMode) => void;
   setSimulationJd: (jd: number) => void;
   setUseRealOrbits: (v: boolean) => void;
+  setGalactic: (v: boolean) => void;
   reset: () => void;
 }
 
@@ -66,6 +76,7 @@ export const useExploreStore = create<ExploreState>((set) => ({
   scaleMode: "visual",
   simulationJd: jdNow(),
   useRealOrbits: false,
+  galactic: false,
 
   setFocused: (id) => set({ focusedBodyId: id }),
   setSelected: (id) => set({ selectedBodyId: id, focusedBodyId: id ?? null }),
@@ -76,6 +87,7 @@ export const useExploreStore = create<ExploreState>((set) => ({
   setScaleMode: (m) => set({ scaleMode: m }),
   setSimulationJd: (jd) => set({ simulationJd: jd }),
   setUseRealOrbits: (v) => set({ useRealOrbits: v }),
+  setGalactic: (v) => set({ galactic: v }),
   reset: () =>
     set({
       focusedBodyId: null,

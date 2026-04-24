@@ -7,6 +7,7 @@ import * as THREE from "three";
 import type { KeplerianElementsData } from "@/data-platform/schemas/body";
 import { DEG2RAD } from "@/data-platform/physics/constants";
 import { bodyPositions, useExploreStore } from "@/store/explore-store";
+import { galacticState } from "@/store/galactic-state";
 
 interface OrbitLineProps {
   /** Body id whose position we can highlight along the orbit. */
@@ -85,9 +86,11 @@ export function OrbitLine({
     const geom = new THREE.BufferGeometry().setFromPoints(points);
 
     // Vertex colors for a gentle fade across the loop — reads as a soft
-    // guide instead of a hard ring.
+    // guide instead of a hard ring. Match the trail brightening (18%
+    // toward white) so an orbit ring in normal mode shares its colour
+    // identity with the same planet's helix in the galactic frame.
     const colorAttr = new Float32Array(points.length * 3);
-    const baseColor = new THREE.Color(color);
+    const baseColor = new THREE.Color(color).lerp(new THREE.Color("#ffffff"), 0.18);
     for (let s = 0; s < points.length; s++) {
       const t = s / (points.length - 1);
       // Overall fade + subtle \"dash\" modulation for observatory-style readability.
@@ -184,6 +187,10 @@ export function OrbitLine({
     }
     // Keep overview readability strong even with a textured background.
     target *= 0.58 + 0.42 * closeFade;
+    // Heliocentric-only construct: orbit rings are a Sun-centric abstraction
+    // and don't describe the helix we see in the galactic frame. Fade them
+    // out as the reveal animates toward the galactic frame.
+    target *= 1 - galacticState.revealT;
 
     // Frame-rate independent smoothing.
     const t = 1 - Math.pow(0.002, delta);
@@ -194,7 +201,10 @@ export function OrbitLine({
     // Highlight arc near current planet position (subtle, only when helpful).
     const pos = bodyPositions.get(bodyId);
     const allowHighlight = (!hasFocus && !hasSelection) || isSelected || isFocused;
-    if (!pos || !allowHighlight || points.length < 8) {
+    // Suppress the highlight arc in the galactic frame — it's pinned to
+    // the stylised ring geometry, which is drifting in world space with
+    // the heliocentric group. Keep the helix the only live indicator.
+    if (!pos || !allowHighlight || points.length < 8 || galacticState.revealT > 0.15) {
       hiMat.opacity = THREE.MathUtils.lerp(hiMat.opacity, 0, t);
       return;
     }

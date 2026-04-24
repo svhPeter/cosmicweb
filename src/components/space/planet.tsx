@@ -6,6 +6,7 @@ import * as THREE from "three";
 
 import type { CelestialBody } from "@/data-platform/schemas/body";
 import {
+  bodyPositions,
   reportBodyPosition,
   useExploreStore,
 } from "@/store/explore-store";
@@ -56,6 +57,10 @@ export function Planet({
   const groupRef = useRef<THREE.Group>(null);
   const meshRef = useRef<THREE.Mesh>(null);
   const worldPos = useRef(new THREE.Vector3());
+  // The shaders consume this as a world-space vector. Previously this was
+  // hardcoded to the origin — correct only when the heliocentric frame
+  // itself was at the origin. We now mirror the Sun's reported world
+  // position each frame so lighting stays correct under galactic drift.
   const sunWorld = useMemo(() => new THREE.Vector3(0, 0, 0), []);
 
   const speed = useExploreStore((s) => s.speed);
@@ -115,6 +120,12 @@ export function Planet({
     // Report world position to the camera controller.
     groupRef.current.getWorldPosition(worldPos.current);
     reportBodyPosition(body.id, worldPos.current);
+
+    // Mirror the Sun's reported world position into the shader-bound
+    // vector so planet lighting stays correct even when the whole
+    // heliocentric frame is drifting through space.
+    const sunPos = bodyPositions.get("sun");
+    if (sunPos) sunWorld.copy(sunPos);
   });
 
   const bandColor = body.render.bandHex ?? body.render.colorHex;

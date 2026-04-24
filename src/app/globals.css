@@ -34,6 +34,10 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* Prevents iOS Safari from auto-inflating copy when the viewport
+       is narrow (100vw text looks cartoonish otherwise). */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
@@ -41,6 +45,9 @@
     color: hsl(var(--foreground));
     font-feature-settings: "ss01", "cv11";
     font-variant-ligatures: common-ligatures contextual;
+    /* Tap highlight in the brand accent instead of browser default blue. */
+    -webkit-tap-highlight-color: hsl(var(--accent) / 0.2);
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4 {
@@ -99,6 +106,25 @@
     -webkit-backdrop-filter: blur(14px) saturate(140%);
     border: 1px solid hsl(var(--border));
     border-radius: 16px;
+  }
+
+  /* Backdrop blur is the single most expensive effect on mobile GPUs
+     when many panels stack (explore HUD + controls + chips). Below the
+     tablet breakpoint we drop blur radius and lean on a slightly more
+     opaque panel tint so the material reads as "frosted" without asking
+     the GPU to rebuild a large blurred layer every frame. */
+  @media (max-width: 768px) {
+    .cosmos-panel {
+      background: hsl(var(--panel) / 0.9);
+      backdrop-filter: blur(8px) saturate(130%);
+      -webkit-backdrop-filter: blur(8px) saturate(130%);
+    }
+
+    .cosmos-chip {
+      background: hsl(var(--panel) / 0.82);
+      backdrop-filter: blur(6px) saturate(130%);
+      -webkit-backdrop-filter: blur(6px) saturate(130%);
+    }
   }
 
   .cosmos-kbd {

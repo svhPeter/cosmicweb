@@ -17,6 +17,11 @@ import { GalacticController } from "@/components/space/galactic-controller";
 import { GalacticDust } from "@/components/space/galactic-dust";
 import { PlanetTrails } from "@/components/space/planet-trails";
 import { MotionAxis } from "@/components/space/motion-axis";
+import {
+  EclipticDisc,
+  GalacticPlaneRing,
+} from "@/components/space/orientation-frame";
+import { EarthMoonSystem } from "@/components/space/earth-moon-system";
 import { PostFX } from "@/components/space/post-fx";
 import { useExploreStore } from "@/store/explore-store";
 import { useDeviceTier } from "@/lib/use-device-tier";
@@ -44,16 +49,19 @@ export function SolarSystemScene({
   interactive = true,
   dpr,
   onIntroActiveChange,
+  skipIntro = false,
 }: {
   hud?: React.ReactNode;
   className?: string;
   interactive?: boolean;
   dpr?: [number, number];
   onIntroActiveChange?: (active: boolean) => void;
+  skipIntro?: boolean;
 }) {
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const [highPerf, setHighPerf] = useState(true);
   const useRealOrbits = useExploreStore((s) => s.useRealOrbits);
+  const earthMoonScaleMode = useExploreStore((s) => s.earthMoonScaleMode);
   const tier = useDeviceTier();
 
   // Per-tier scene budgets. Mobile caps DPR at 1.35 (retina is visually
@@ -78,11 +86,20 @@ export function SolarSystemScene({
   const sunDriftRef = useRef(new THREE.Vector3());
 
   const sun = bodies.find((b) => b.type === "star");
+  // Planets and dwarf planets orbit the Sun directly. Moons (type
+  // "moon") are dependent bodies rendered by their parent system
+  // component — in this phase only the Earth-Moon binary, via
+  // `EarthMoonSystem` below.
   const planets = bodies.filter((b) => b.type === "planet" || b.type === "dwarf_planet");
+  const earthBody = bodies.find((b) => b.id === "earth");
+  const earthVisualRadius = earthBody
+    ? Math.max(earthBody.render.relativeSize * SIZE_SCALE, MIN_PLANET_SIZE)
+    : 0.55;
 
   return (
     <div className={`relative ${className}`}>
       <Canvas
+        className="relative z-0 !block h-full w-full touch-manipulation"
         shadows={false}
         dpr={dpr ?? (highPerf ? tierDpr : [1, Math.min(tierDpr[1], 1.3)])}
         gl={{
@@ -120,6 +137,12 @@ export function SolarSystemScene({
 
           <group ref={heliocentricFrameRef}>
             {sun ? <Sun body={sun} radius={SUN_RADIUS} /> : null}
+
+            {/* Ecliptic reference plane. Lives inside the heliocentric
+                group, so it tilts with the orbits — the user sees an
+                actual tilted surface the planets ride on in galactic
+                mode. Quiet/invisible otherwise (keyed off revealT). */}
+            <EclipticDisc />
 
             {planets.map((body, i) => {
               const visualRadius = body.render.orbitAu * ORBIT_SCALE;
@@ -160,8 +183,24 @@ export function SolarSystemScene({
               That's how the helix becomes visible: orbits continue inside the
               frame while the frame itself moves through world space, and the
               trails — pinned to world space — record both motions at once. */}
+          {/* Earth-Moon binary. Lives in world space (outside the
+              heliocentric frame group) and reads Earth's live world
+              position each frame, so it travels with Earth through
+              galactic drift automatically. Focus-gated: hidden from
+              the solar-system overview; fades in when the user zooms
+              to Earth or selects it. */}
+          <EarthMoonSystem
+            scaleMode={earthMoonScaleMode}
+            earthVisualRadius={earthVisualRadius}
+          />
+
           <PlanetTrails bodyIds={planets.map((b) => b.id)} />
           <MotionAxis />
+          {/* Galactic plane reference ring — world-space horizontal, so
+              the contrast against the tilted ecliptic disc is
+              unambiguous. Together they make the 60° tilt read as a
+              measured geometric relationship, not a camera angle. */}
+          <GalacticPlaneRing />
           <GalacticDust />
         </Suspense>
 
@@ -187,6 +226,7 @@ export function SolarSystemScene({
           controlsRef={controlsRef}
           onIntroActiveChange={onIntroActiveChange}
           sunDriftRef={sunDriftRef}
+          skipIntro={skipIntro}
         />
 
         {/* Post-FX pass owns the final cinematic grade (bloom, edge CA,
@@ -196,7 +236,17 @@ export function SolarSystemScene({
         <PostFX />
       </Canvas>
 
-      {hud}
+      {/*
+        HUD must be overlayed, not a normal-flow sibling after the Canvas. Otherwise
+        `absolute` UI (header, footer, sidebar) positions inside a 0px-tall box that
+        sits *below* the 100dvh WebGL view — the UI is off-screen, clicks/selection
+        and list controls appear "missing" while the bottom bar can look halfway ok.
+      */}
+      {hud != null && hud !== false ? (
+        <div className="absolute inset-0 z-20 h-full w-full min-h-0 pointer-events-none">
+          {hud}
+        </div>
+      ) : null}
     </div>
   );
 }

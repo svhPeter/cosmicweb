@@ -28,12 +28,17 @@ export interface NeutronStarSceneProps {
  *   - one beam drifting across the near side.
  * This is immediately readable as "a pulsar", without any hint copy.
  */
-export function NeutronStarScene(_: NeutronStarSceneProps = {}) {
+export function NeutronStarScene({ reducedMotion = false }: NeutronStarSceneProps = {}) {
   const tier = useDeviceTier();
   const tierDpr: [number, number] =
     tier === "low" ? [1, 1.35] : tier === "medium" ? [1, 1.75] : [1, 2];
 
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
+
+  // Canonical concept-line tone: exposure 1.12, FOV 55. Shared with
+  // the black-hole and wormhole scenes so the three pages read as one
+  // editorial line.
+  const timeScale = reducedMotion ? 0.08 : 1.0;
 
   return (
     <Canvas
@@ -61,6 +66,7 @@ export function NeutronStarScene(_: NeutronStarSceneProps = {}) {
           magneticInclination={0.44}
           rotationRate={0.78}
           lightCylinderRs={15.0}
+          timeScale={timeScale}
         />
 
         <OrbitControls

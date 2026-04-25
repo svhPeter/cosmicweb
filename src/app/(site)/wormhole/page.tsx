@@ -4,6 +4,7 @@ import { WormholeExperience } from "@/components/concepts/wormhole/wormhole-expe
 import { RealImageGallery } from "@/components/concepts/real-image-gallery";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Card } from "@/components/ui/card";
+import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Wormholes — predicted, never observed",
@@ -14,6 +15,17 @@ export const metadata: Metadata = {
     description:
       "A theoretical tunnel through bent spacetime. Einstein predicted the shape. Nobody has ever seen one.",
     type: "article",
+    // Wormholes have no photographs — and we honour that inside the
+    // page. For social cards we fall back to the site OG so the share
+    // preview isn't a blank rectangle.
+    images: [
+      {
+        url: site.ogImage,
+        width: 1200,
+        height: 630,
+        alt: "Cosmos — phenomena at the edges of physics",
+      },
+    ],
   },
 };
 

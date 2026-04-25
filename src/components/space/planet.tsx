@@ -97,6 +97,13 @@ export function Planet({
   const useRealOrbits = useExploreStore((s) => s.useRealOrbits);
   const hovered = useExploreStore((s) => s.hoveredBodyId) === body.id;
   const selected = useExploreStore((s) => s.selectedBodyId) === body.id;
+  const focused = useExploreStore((s) => s.focusedBodyId) === body.id;
+  const focusedId = useExploreStore((s) => s.focusedBodyId);
+  const selectedId = useExploreStore((s) => s.selectedBodyId);
+  /** Orbit focus ring: matches sidebar (selection or focus, even with card hidden). */
+  const showFocusRing =
+    (hovered || selected || focused) &&
+    !(body.id === "earth" && (selectedId === "moon" || focusedId === "moon"));
 
   const size = Math.max(body.render.relativeSize * sizeScale, minSize);
 
@@ -400,7 +407,7 @@ export function Planet({
         <SaturnRings size={size} innerColor={ringInner} outerColor={ringOuter} />
       ) : null}
 
-      {(hovered || selected) && (
+      {showFocusRing ? (
         <mesh>
           <ringGeometry args={[size * 1.55, size * 1.62, 96]} />
           <meshBasicMaterial
@@ -411,7 +418,7 @@ export function Planet({
             depthWrite={false}
           />
         </mesh>
-      )}
+      ) : null}
     </group>
   );
 }

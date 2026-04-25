@@ -16,14 +16,22 @@ const NORMAL_OVERVIEW_TARGET = new THREE.Vector3(0, 0, 0);
 /**
  * Pose offset applied around the Sun when galactic frame is active.
  *
- * The intent is to reveal the tilt: step the camera off the default
- * top-down line, drop the elevation slightly so the tilted ecliptic
- * presents a clear edge against the horizontal Milky Way, and sit
- * alongside the motion direction so the trails flow forward across the
- * frame rather than into the distance.
+ * The intent is to reveal two things at once:
+ *   1. the 60° tilt of the ecliptic against the galactic plane, and
+ *   2. the fact that the Solar System is being carried through space.
+ *
+ * Earlier versions used a modest offset (-12, 12, 28) which read as "the
+ * camera tilted a bit" — too close to the normal overview pose to feel
+ * like entering a deeper mode. Pulling back to roughly twice that
+ * distance (magnitude ~60 vs ~33) makes the mode shift read as zooming
+ * out to see the big picture: the Solar System shrinks into a small
+ * tilted disk, the motion axis runs clearly across the frame, and the
+ * helical trails behind the planets have room to develop before the
+ * camera edge clips them. The offset still sits alongside the motion
+ * direction so trails flow across the frame rather than into depth.
  */
-const GALACTIC_CAM_OFFSET = new THREE.Vector3(-12, 12, 28);
-const GALACTIC_TRANSITION_SECONDS = 3.0;
+const GALACTIC_CAM_OFFSET = new THREE.Vector3(-22, 24, 52);
+const GALACTIC_TRANSITION_SECONDS = 3.2;
 
 function smootherstep(t: number): number {
   // Smootherstep (zero slope AND zero acceleration at the endpoints) —
@@ -49,14 +57,18 @@ export function CameraController({
   controlsRef,
   onIntroActiveChange,
   sunDriftRef,
+  /** When set (e.g. `?focus=` deep link), skip the first-visit cinematic intro so focus framing is immediate. */
+  skipIntro = false,
 }: {
   controlsRef: React.RefObject<OrbitControlsImpl | null>;
   onIntroActiveChange?: (active: boolean) => void;
   sunDriftRef?: React.RefObject<THREE.Vector3>;
+  skipIntro?: boolean;
 }) {
   const { camera } = useThree();
   const focusedId = useExploreStore((s) => s.focusedBodyId);
   const galactic = useExploreStore((s) => s.galactic);
+  const earthMoonScaleMode = useExploreStore((s) => s.earthMoonScaleMode);
 
   const overviewPos = useRef(NORMAL_OVERVIEW_POS.clone());
   const overviewTarget = useRef(NORMAL_OVERVIEW_TARGET.clone());
@@ -131,6 +143,8 @@ export function CameraController({
   const tmpA = useRef(new THREE.Vector3());
   const tmpB = useRef(new THREE.Vector3());
   const tmpC = useRef(new THREE.Vector3());
+  /** Earth–Moon — scale mode uses the pair midpoint; normal Moon focus orbits the Moon. */
+  const emPairMid = useRef(new THREE.Vector3());
 
   useEffect(() => {
     const controls = controlsRef.current;
@@ -155,6 +169,11 @@ export function CameraController({
   useEffect(() => {
     const controls = controlsRef.current;
     if (!controls) return;
+
+    if (skipIntro) {
+      onIntroActiveChange?.(false);
+      return;
+    }
 
     const coarse =
       typeof window !== "undefined" &&
@@ -210,7 +229,7 @@ export function CameraController({
       window.removeEventListener("keydown", skip);
       window.removeEventListener("pointerdown", skip);
     };
-  }, [camera, controlsRef, onIntroActiveChange]);
+  }, [camera, controlsRef, onIntroActiveChange, skipIntro]);
 
   useEffect(() => {
     const body = focusedId ? bodies.find((b) => b.id === focusedId) : null;
@@ -219,17 +238,72 @@ export function CameraController({
 
     const isFocus = !!body && body.type !== "star";
     const live = isFocus && focusedId ? bodyPositions.get(focusedId) : null;
-    const target = live ?? overviewTarget.current;
+    // Default: track the focused body's center. For Moon, we re-centre on
+    // the Earth–Moon pair so both fit in a deliberate, balanced frame.
+    let target = (live ?? overviewTarget.current) as THREE.Vector3;
+
+    const isMoonFocus = isFocus && body && body.type === "moon";
+    const earthP = bodyPositions.get("earth");
+    const moonP = bodyPositions.get("moon");
+    const emScalePair =
+      earthMoonScaleMode && (body?.id === "earth" || body?.id === "moon");
+    if (isMoonFocus && earthP && moonP) {
+      if (emScalePair) {
+        emPairMid.current.lerpVectors(earthP, moonP, 0.5);
+        target = emPairMid.current;
+      } else {
+        // Orbit & zoom about the Moon so users can inspect it; Earth stays in view at ~1.8 u.
+        target = moonP;
+      }
+    }
 
     const from = camera.position.clone();
     const dir = tmpA.current
       .copy(from)
       .sub(target)
       .normalize()
-      .add(tmpB.current.set(0, 0.18, 0))
+      .add(tmpB.current.set(0, 0.26, 0.1))
       .normalize();
 
-    const desiredDistance = isFocus ? Math.max(body.render.relativeSize * 3.8, 4.2) : 38;
+    // Per-body framing. The Moon is rendered at a hardcoded visual size
+    // outside the planet sizing pipeline — its render.relativeSize is its
+    // physical ratio to Earth (0.273), but the on-screen size is ~0.15
+    // scene units. Using the planetary formula here would put the camera
+    // ~28 moon-radii away — far enough that the Moon reads as a dot.
+    // Scaling distance to actual visual size keeps inspection close enough
+    // to read the surface without clipping into the rim glow.
+    // Scale Mode reframe: when focused on Earth and Scale Mode toggles on,
+    // pull the camera back so both Earth and Moon are in frame at their
+    // true 60-Earth-radii separation (~33 scene units). Without this,
+    // toggling Scale Mode while focused on Earth puts the Moon off-screen
+    // — the educational moment is invisible.
+    const isScaleModeFraming =
+      isFocus && body && body.id === "earth" && earthMoonScaleMode;
+    const isScaleMoonWithPair =
+      isFocus && isMoonFocus && earthMoonScaleMode && earthP && moonP;
+
+    let desiredDistance: number;
+    if (!isFocus) {
+      desiredDistance = 38;
+    } else if (isScaleModeFraming || isScaleMoonWithPair) {
+      // One framing distance for the true 60R Earth–Moon gap — whether
+      // user landed on Earth or the Moon in Scale Mode.
+      desiredDistance = 52;
+    } else if (isMoonFocus && earthP && moonP) {
+      if (emScalePair) {
+        const separation = earthP.distanceTo(moonP);
+        desiredDistance = Math.max(4.2, separation * 1.12 + 3.1);
+      } else {
+        // Tight on the Moon: enough back to see disk + limb; user can dolly in further.
+        desiredDistance = 0.82;
+      }
+    } else if (isMoonFocus) {
+      // Rare: Earth not registered yet; avoid mis-sizing off Moon.render.
+      desiredDistance = 1.4;
+    } else {
+      desiredDistance = Math.max(body!.render.relativeSize * 3.8, 4.2);
+    }
+
     const to = isFocus
       ? tmpC.current.copy(target).add(dir.multiplyScalar(desiredDistance)).clone()
       : overviewPos.current.clone();
@@ -243,14 +317,33 @@ export function CameraController({
     };
 
     if (isFocus) {
-      const minD = Math.max(body.render.relativeSize * 1.35, 2.8);
+      let minD: number;
+      let maxD: number;
+      if (isScaleModeFraming || isScaleMoonWithPair) {
+        // Allow the user to push out further to absorb the gap, and to
+        // pull back in toward Earth without losing the framing.
+        minD = 6;
+        maxD = 140;
+      } else if (isMoonFocus && earthP && moonP) {
+        if (emScalePair) {
+          const separation = earthP.distanceTo(moonP);
+          minD = Math.max(2.0, separation * 0.55);
+          maxD = 150;
+        } else {
+          minD = 0.2;
+          maxD = 95;
+        }
+      } else {
+        minD = Math.max(body.render.relativeSize * 1.35, 2.8);
+        maxD = Math.max(minD * 24, 80);
+      }
       controls.minDistance = minD;
-      controls.maxDistance = Math.max(minD * 24, 80);
+      controls.maxDistance = maxD;
     } else {
       controls.minDistance = 6;
       controls.maxDistance = 320;
     }
-  }, [focusedId, camera, controlsRef]);
+  }, [focusedId, earthMoonScaleMode, camera, controlsRef]);
 
   // Galactic-frame reframe: pick a target pose that reveals the tilt +
   // trails, then run a smooth camera-and-target transition toward it.
@@ -389,12 +482,39 @@ export function CameraController({
     // camera+target together so the body stays centered and the user's
     // current viewing direction is preserved.
     if (focusedId) {
-      const live = bodyPositions.get(focusedId);
-      if (live) {
-        prevTarget.current.copy(controls.target);
-        deltaTarget.current.subVectors(live, prevTarget.current);
-        controls.target.copy(live);
-        camera.position.add(deltaTarget.current);
+      if (focusedId === "moon") {
+        const eW = bodyPositions.get("earth");
+        const mW = bodyPositions.get("moon");
+        if (eW && mW) {
+          if (earthMoonScaleMode) {
+            const mid = emPairMid.current.lerpVectors(eW, mW, 0.5);
+            prevTarget.current.copy(controls.target);
+            deltaTarget.current.subVectors(mid, prevTarget.current);
+            controls.target.copy(mid);
+            camera.position.add(deltaTarget.current);
+          } else {
+            prevTarget.current.copy(controls.target);
+            deltaTarget.current.subVectors(mW, prevTarget.current);
+            controls.target.copy(mW);
+            camera.position.add(deltaTarget.current);
+          }
+        } else {
+          const liveM = bodyPositions.get("moon");
+          if (liveM) {
+            prevTarget.current.copy(controls.target);
+            deltaTarget.current.subVectors(liveM, prevTarget.current);
+            controls.target.copy(liveM);
+            camera.position.add(deltaTarget.current);
+          }
+        }
+      } else {
+        const live = bodyPositions.get(focusedId);
+        if (live) {
+          prevTarget.current.copy(controls.target);
+          deltaTarget.current.subVectors(live, prevTarget.current);
+          controls.target.copy(live);
+          camera.position.add(deltaTarget.current);
+        }
       }
       prevSunWorld.current = null;
     } else {

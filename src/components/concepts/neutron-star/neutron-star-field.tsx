@@ -72,6 +72,13 @@ export interface NeutronStarFieldProps {
   rotationRate?: number;
   /** Light-cylinder radius as a multiple of r*. */
   lightCylinderRs?: number;
+  /**
+   * Scales per-frame delta into the shader's time uniform. 1.0 is the
+   * cinematic default; a small value near zero honours
+   * `prefers-reduced-motion` — the beams stop sweeping on their own
+   * while orbit controls still feel responsive.
+   */
+  timeScale?: number;
 }
 
 export function NeutronStarField({
@@ -80,6 +87,7 @@ export function NeutronStarField({
   magneticInclination = 0.44, // ~25°
   rotationRate = 0.78, // ~8 s per rotation
   lightCylinderRs = 15.0,
+  timeScale = 1.0,
 }: NeutronStarFieldProps) {
   const tier = useDeviceTier();
   const { camera, size } = useThree();
@@ -89,7 +97,7 @@ export function NeutronStarField({
 
   useFrame((_, delta) => {
     const u = material.uniforms as Record<string, THREE.IUniform>;
-    u.uTime!.value = (u.uTime!.value as number) + delta;
+    u.uTime!.value = (u.uTime!.value as number) + delta * timeScale;
     u.uTimelineT!.value = timelineT;
     (u.uResolution!.value as THREE.Vector2).set(size.width, size.height);
 
@@ -251,6 +259,22 @@ function buildMaterial({ quality }: MaterialOptions): THREE.ShaderMaterial {
           q *= 2.07;
         }
 
+        // Galactic plane wash — a broad, tilted band of unresolved
+        // starlight and dust across the backdrop. Gives the sky the
+        // same "depth" register as the black-hole scene instead of a
+        // flat starfield. Tilted ~25° to echo the Milky Way's
+        // orientation from a mid-latitude viewpoint.
+        vec3 planeNormal = normalize(vec3(0.38, 0.92, 0.10));
+        float planeDist = abs(dot(d, planeNormal));
+        float plane = smoothstep(0.55, 0.0, planeDist);
+        float planeDust = fbm3(d * 2.1 + vec3(0.0, 0.0, uTime * 0.003));
+        vec3 planeTint = mix(
+          vec3(0.10, 0.16, 0.22),
+          vec3(0.22, 0.22, 0.28),
+          planeDust
+        );
+        col += planeTint * plane * 0.55;
+
         // Supernova-remnant filaments — bluey-cyan filigree with a
         // touch of warm oxygen tint. Modulated by a bandpass on fBm so
         // it reads as stringy, not as a flat glow.
@@ -259,6 +283,26 @@ function buildMaterial({ quality }: MaterialOptions): THREE.ShaderMaterial {
         col += vec3(0.08, 0.18, 0.22) * filaments * 0.7;
         float warm = fbm3(d * 3.9 + vec3(uTime * 0.004, 0.0, 0.0));
         col += vec3(0.18, 0.10, 0.05) * smoothstep(0.72, 0.92, warm) * 0.35;
+
+        // Hero supernova-remnant shell — the physical home of this
+        // pulsar. A broad, faint arc centred off-frame so it never
+        // competes with the star, but tells the whole story: "this
+        // object is the compact remnant that shell was built around."
+        // Two layers: a soft emissive interior and a sharper rim
+        // where cool, ionised shocks would still glow.
+        vec3 remnantCenter = normalize(vec3(0.72, -0.35, -0.60));
+        float cosR = dot(d, remnantCenter);
+        // Smoothed disc ~35° across — wide enough to read as a shell,
+        // narrow enough to leave most of the sky clean.
+        float remnantBody = smoothstep(0.65, 0.92, cosR);
+        float remnantRim = smoothstep(0.70, 0.78, cosR) * (1.0 - smoothstep(0.78, 0.86, cosR));
+        float remnantTex = fbm3(d * 4.2 + vec3(uTime * 0.002, 0.0, 0.0));
+        col += vec3(0.10, 0.18, 0.28) * remnantBody * (0.35 + 0.45 * remnantTex);
+        col += vec3(0.45, 0.70, 1.00) * remnantRim * (0.20 + 0.35 * remnantTex);
+        // A thin band of warmer, oxygen-green pickup along the rim —
+        // matches the spectra of historical SNRs (Vela, Crab) without
+        // committing to any single object.
+        col += vec3(0.18, 0.32, 0.18) * remnantRim * 0.25;
 
         return col * 1.5;
       }

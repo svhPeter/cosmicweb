@@ -1,6 +1,7 @@
 "use client";
 
-import { Pause, Play, Rewind, FastForward, Orbit, Sparkles } from "lucide-react";
+import { useEffect } from "react";
+import { Pause, Play, Rewind, FastForward, Orbit, Sparkles, Ruler } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useExploreStore } from "@/store/explore-store";
@@ -27,6 +28,30 @@ export function TimeControlBar({ className }: { className?: string }) {
   const setUseRealOrbits = useExploreStore((s) => s.setUseRealOrbits);
   const galactic = useExploreStore((s) => s.galactic);
   const setGalactic = useExploreStore((s) => s.setGalactic);
+  const earthMoonScaleMode = useExploreStore((s) => s.earthMoonScaleMode);
+  const setEarthMoonScaleMode = useExploreStore((s) => s.setEarthMoonScaleMode);
+  const focusedId = useExploreStore((s) => s.focusedBodyId);
+  const selectedId = useExploreStore((s) => s.selectedBodyId);
+  // Scale chip is contextual: only offered when the Earth–Moon system is
+  // the subject of attention. Showing it on the overview would be noise —
+  // the effect only reads on the binary itself.
+  const scaleRelevant =
+    focusedId === "earth" ||
+    focusedId === "moon" ||
+    selectedId === "earth" ||
+    selectedId === "moon";
+
+  // Auto-clear Scale Mode when the user navigates away from Earth/Moon.
+  // Without this, the toggle quietly persists into the overview, where the
+  // Moon would sit at the true 60-Earth-radii distance — bigger than
+  // Mercury's orbit at the current scene scale — and look like a bug.
+  // The flag belongs to the Earth–Moon educational pose; it should not
+  // outlive that pose.
+  useEffect(() => {
+    if (!scaleRelevant && earthMoonScaleMode) {
+      setEarthMoonScaleMode(false);
+    }
+  }, [scaleRelevant, earthMoonScaleMode, setEarthMoonScaleMode]);
 
   const idx = speedSteps.indexOf(speed);
 
@@ -125,6 +150,35 @@ export function TimeControlBar({ className }: { className?: string }) {
         <Sparkles className="h-3 w-3" />
         <span className="hidden sm:inline">Galactic</span>
       </button>
+
+      {/* Scale — Earth–Moon only. Appears when the user is actually
+          engaging with Earth or the Moon, so the overview stays calm.
+          Conditionally rendered (rather than opacity-hidden) so it
+          doesn't reserve a gap in the wrap-prone control row when
+          irrelevant. Layout shift is acceptable here because focus
+          change is itself a deliberate context switch — the chip
+          appearing reinforces "you've entered Earth–Moon territory". */}
+      {scaleRelevant ? (
+        <button
+          type="button"
+          onClick={() => setEarthMoonScaleMode(!earthMoonScaleMode)}
+          aria-pressed={earthMoonScaleMode}
+          className={cn(
+            "inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] transition-colors",
+            earthMoonScaleMode
+              ? "bg-accent/15 text-accent ring-1 ring-inset ring-accent/30"
+              : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+          )}
+          title={
+            earthMoonScaleMode
+              ? "Scale Mode on: Moon orbits Earth at the true 60-Earth-radii distance (~384,400 km)"
+              : "Switch to true Earth–Moon scale (60 Earth radii apart)"
+          }
+        >
+          <Ruler className="h-3 w-3" />
+          <span className="hidden sm:inline">Scale</span>
+        </button>
+      ) : null}
     </div>
   );
 }

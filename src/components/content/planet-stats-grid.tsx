@@ -1,7 +1,16 @@
 import type { CelestialBody } from "@/data-platform/schemas/body";
+import { bodiesById } from "@/data-static/bodies";
 import { formatNumber } from "@/lib/utils";
 
 export function PlanetStatsGrid({ body }: { body: CelestialBody }) {
+  const isMoon = body.type === "moon";
+  const parent = body.parentId ? bodiesById[body.parentId] : undefined;
+
+  // For moons, "year length" and "distance from Sun" don't carry their
+  // primary-body meaning — a moon's orbital period is around its parent,
+  // and its heliocentric distance is the parent's. Relabel rather than
+  // delete, so the grid keeps a consistent shape across body types and
+  // still surfaces the actually-interesting figure.
   const items: { label: string; value: string; hint?: string }[] = [
     {
       label: "Radius",
@@ -23,40 +32,59 @@ export function PlanetStatsGrid({ body }: { body: CelestialBody }) {
       value: `${formatNumber(body.physical.meanTemperatureC, 0)} °C`,
     },
     {
-      label: "Day length",
+      label: isMoon ? "Sidereal rotation" : "Day length",
       value:
         body.orbit.dayLengthHours < 48
           ? `${formatNumber(body.orbit.dayLengthHours, 2)} hours`
           : `${formatNumber(body.orbit.dayLengthHours / 24, 1)} Earth days`,
+      hint: isMoon
+        ? "Tidally locked: one lunar day = one sidereal month (~27.3 d), same face toward Earth"
+        : undefined,
     },
     {
-      label: "Year length",
+      label: isMoon ? `Orbit around ${parent?.name ?? "primary"}` : "Year length",
       value:
         body.orbit.yearLengthDays === 0
           ? "—"
           : body.orbit.yearLengthDays < 1000
             ? `${formatNumber(body.orbit.yearLengthDays, 1)} days`
             : `${formatNumber(body.orbit.yearLengthDays / 365.25, 2)} Earth years`,
+      hint: isMoon
+        ? "Sidereal month ~27.3 d. Synodic month (new moon to new moon) ~29.5 d — the cycle behind our calendar months"
+        : undefined,
     },
-    {
-      label: "Distance from Sun",
-      value:
-        body.orbit.distanceFromSunKm === 0
-          ? "—"
-          : `${formatNumber(body.orbit.distanceFromSunKm / 1_000_000, 1)} M km`,
-      hint:
-        body.orbit.distanceFromSunKm === 0
-          ? undefined
-          : `${formatNumber(body.orbit.distanceFromSunKm / 149_597_870, 2)} AU`,
-    },
+    isMoon && body.parentDistanceKm
+      ? {
+          label: `Distance from ${parent?.name ?? "primary"}`,
+          value: `${formatNumber(body.parentDistanceKm, 0)} km`,
+          hint:
+            parent?.physical.radiusKm
+              ? `${formatNumber(body.parentDistanceKm / (parent.physical.radiusKm * 2), 0)} ${parent.name} diameters`
+              : undefined,
+        }
+      : {
+          label: "Distance from Sun",
+          value:
+            body.orbit.distanceFromSunKm === 0
+              ? "—"
+              : `${formatNumber(body.orbit.distanceFromSunKm / 1_000_000, 1)} M km`,
+          hint:
+            body.orbit.distanceFromSunKm === 0
+              ? undefined
+              : `${formatNumber(body.orbit.distanceFromSunKm / 149_597_870, 2)} AU`,
+        },
     {
       label: "Axial tilt",
       value: `${formatNumber(body.physical.axialTiltDeg, 2)}°`,
     },
     {
-      label: "Moons",
-      value: formatNumber(body.moons.count, 0),
-      hint: body.moons.notable.length ? body.moons.notable.slice(0, 3).join(" · ") : undefined,
+      label: isMoon ? "Atmosphere" : "Moons",
+      value: isMoon ? "None" : formatNumber(body.moons.count, 0),
+      hint: isMoon
+        ? "Trace exosphere only"
+        : body.moons.notable.length
+          ? body.moons.notable.slice(0, 3).join(" · ")
+          : undefined,
     },
   ];
 

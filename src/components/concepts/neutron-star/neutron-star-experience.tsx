@@ -7,13 +7,15 @@ import {
   type BlueprintLandmark,
   ConceptHUD,
 } from "@/components/concepts/concept-hud";
+import { ConceptSkeleton } from "@/components/concepts/concept-skeleton";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 const NeutronStarScene = dynamic(
   () =>
     import("@/components/concepts/neutron-star/neutron-star-scene").then(
       (m) => m.NeutronStarScene
     ),
-  { ssr: false, loading: () => <HeroSkeleton /> }
+  { ssr: false, loading: () => <ConceptSkeleton tint="neutronstar" /> }
 );
 
 /**
@@ -56,11 +58,12 @@ const BLUEPRINT_LANDMARKS: readonly BlueprintLandmark[] = [
 
 export function NeutronStarExperience() {
   const [blueprintEnabled, setBlueprintEnabled] = useState(false);
+  const reducedMotion = useReducedMotion();
 
   return (
     <>
-      <div className="absolute inset-0">
-        <NeutronStarScene />
+      <div className="absolute inset-0 cosmos-scene-in">
+        <NeutronStarScene reducedMotion={reducedMotion} />
       </div>
 
       <ConceptHUD
@@ -71,19 +74,5 @@ export function NeutronStarExperience() {
         blueprintUnitLabel="r*"
       />
     </>
-  );
-}
-
-function HeroSkeleton() {
-  return (
-    <div className="absolute inset-0 bg-[#02030a]">
-      <div
-        className="absolute inset-0 opacity-70"
-        style={{
-          background:
-            "radial-gradient(ellipse at center, hsl(205 85% 65% / 0.14), hsl(248 70% 40% / 0.10) 40%, transparent 65%)",
-        }}
-      />
-    </div>
   );
 }

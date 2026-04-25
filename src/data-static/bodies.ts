@@ -235,6 +235,74 @@ const rawBodies: CelestialBody[] = [
     ],
   },
   {
+    id: "moon",
+    slug: "moon",
+    name: "The Moon",
+    type: "moon",
+    parentId: "earth",
+    // Mean semi-major axis around Earth. The actual orbit varies between
+    // ~363,300 km (perigee) and ~405,500 km (apogee) — the ~5.5%
+    // eccentricity that drives supermoons and annular eclipses.
+    parentDistanceKm: 384_400,
+    tidallyLocked: true,
+    tagline: "Earth's only natural satellite — tidally locked, close enough to hold our oceans and our axis steady.",
+    description:
+      "The Moon is the fifth-largest moon in the Solar System and the largest relative to its parent. It rotates on its axis in exactly the same time it takes to orbit Earth, so the same hemisphere always faces us — the near side. Its gravity raises Earth's tides and stabilises our axial tilt over long timescales, quietly shaping our climate and our seasons.",
+    facts: [
+      "The Moon is tidally locked: the near side always faces Earth, and the far side was only first photographed by Luna 3 in 1959.",
+      "Earth–Moon distance averages ~384,400 km — about 30 Earth diameters. You could line up every other planet in the Solar System inside that gap.",
+      "Apollo astronauts left retroreflectors on the surface that let us measure the distance to within a few millimetres using laser pulses from Earth.",
+    ],
+    physical: {
+      radiusKm: 1_737.4,
+      massKg: 7.342e22,
+      gravityMs2: 1.625,
+      // Mean equatorial surface temperature. Swings from ≈ -173 °C
+      // (night) to ≈ 127 °C (day) — there's no atmosphere to even it out.
+      meanTemperatureC: -23,
+      // Tilt of the lunar rotation axis to the ecliptic. (It is 1.54°
+      // relative to the Moon's own orbital plane around Earth.)
+      axialTiltDeg: 6.68,
+    },
+    orbit: {
+      // Sidereal rotation and orbital period are equal (tidal lock).
+      dayLengthHours: 655.72,
+      yearLengthDays: 27.32,
+      // Moon moves with Earth around the Sun. For heliocentric queries
+      // this is effectively Earth's value; precise relative distance to
+      // the primary is in `parentDistanceKm` above.
+      distanceFromSunKm: 149_600_000,
+      orbitalEccentricity: 0.0549,
+    },
+    atmosphere: {
+      summary:
+        "Essentially none. A trace-gas exosphere so thin that molecules rarely collide — more like the surface of an asteroid than a planet.",
+      composition: ["Helium", "Neon", "Hydrogen", "Argon — all in trace amounts"],
+    },
+    moons: { count: 0, notable: [] },
+    comparisonToEarth: {
+      gravity: 0.1654,
+      radius: 0.2725,
+      mass: 0.0123,
+      dayLength: 27.32,
+      yearLength: 0.0748,
+    },
+    render: {
+      // Warm lunar gray, between the cool highlands and the darker maria.
+      colorHex: "#a39b90",
+      relativeSize: 0.273,
+      // Moons don't orbit the Sun directly in our scene; position is
+      // derived from the parent's world position each frame.
+      orbitAu: 0,
+      ringed: false,
+    },
+    sources: [
+      { label: "NASA Moon fact sheet", url: "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html" },
+      { label: "NASA Science — Earth's Moon", url: "https://science.nasa.gov/moon/" },
+      { label: "NASA SVS — CGI Moon Kit", url: "https://svs.gsfc.nasa.gov/4720" },
+    ],
+  },
+  {
     id: "mars",
     slug: "mars",
     name: "Mars",

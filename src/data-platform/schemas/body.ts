@@ -65,6 +65,21 @@ export const CelestialBodySchema = z.object({
   name: z.string(),
   type: CelestialBodyTypeSchema,
 
+  /**
+   * For moons and other dependent bodies: id of the primary they orbit.
+   * Present only for `type: "moon"`. Absent for planets and stars, which
+   * are treated as heliocentric.
+   */
+  parentId: z.string().optional(),
+  /** Mean distance from the parent in km. Moons only. */
+  parentDistanceKm: z.number().positive().optional(),
+  /**
+   * Whether the body is tidally locked to its parent — the same face
+   * always points at the primary. Used by the renderer to suppress
+   * free-axis rotation.
+   */
+  tidallyLocked: z.boolean().optional(),
+
   tagline: z.string(),
   description: z.string(),
   facts: z.array(z.string()).default([]),

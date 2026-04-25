@@ -2,10 +2,14 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
+import { Html } from "@react-three/drei";
 import * as THREE from "three";
 
 import { bodyPositions } from "@/store/explore-store";
-import { galacticState } from "@/store/galactic-state";
+import {
+  galacticState,
+  SUN_GALACTIC_SPEED_KM_S,
+} from "@/store/galactic-state";
 
 /**
  * Motion axis indicator for galactic mode.
@@ -25,6 +29,7 @@ export function MotionAxis() {
   const materialRef = useRef<THREE.LineBasicMaterial>(null);
   const groupRef = useRef<THREE.Group>(null);
   const tipRef = useRef<THREE.Mesh>(null);
+  const labelRef = useRef<HTMLDivElement>(null);
 
   // 72 units front and 28 units behind — the line leads more than it
   // trails so it reads directionally rather than symmetrically.
@@ -70,6 +75,13 @@ export function MotionAxis() {
       // Gentle scale-in so the tip doesn't pop.
       tipRef.current.scale.setScalar(0.55 + 0.45 * eased);
     }
+
+    // Fade the screen-space label alongside the axis. Setting opacity
+    // via the DOM node (not state) so the label animates at render rate
+    // without causing React re-renders.
+    if (labelRef.current) {
+      labelRef.current.style.opacity = (0.85 * eased).toFixed(3);
+    }
   });
 
   // The tip marker sits at the leading end of the axis. A very small,
@@ -104,6 +116,28 @@ export function MotionAxis() {
           toneMapped={false}
         />
       </mesh>
+
+      {/* Screen-space speed label attached to the arrow tip. Using
+          drei's <Html> so the text stays crisp at any distance and
+          always faces the camera. The label reads as a scientific
+          annotation on the axis ("~230 km/s through the Milky Way"),
+          which is the moment the arrow stops being a decorative line
+          and starts communicating a measured, real velocity. */}
+      <Html
+        position={tipPosition}
+        center
+        distanceFactor={26}
+        zIndexRange={[10, 0]}
+        style={{ pointerEvents: "none", userSelect: "none" }}
+      >
+        <div
+          ref={labelRef}
+          style={{ opacity: 0 }}
+          className="whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.22em] text-[#7ee4f5] drop-shadow-[0_0_6px_rgba(126,228,245,0.45)]"
+        >
+          ~{SUN_GALACTIC_SPEED_KM_S} km/s
+        </div>
+      </Html>
     </group>
   );
 }

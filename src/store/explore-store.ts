@@ -46,6 +46,15 @@ interface ExploreState {
    */
   galactic: boolean;
 
+  /**
+   * Scale Mode — one narrowly scoped educational pose. When on, the
+   * Earth-Moon separation snaps to its true 60-Earth-radii ratio,
+   * making the shock of real space distances tangible. Independent
+   * of `useRealOrbits` (which affects heliocentric orbits) and
+   * `galactic` (which is the frame of reference). Off by default.
+   */
+  earthMoonScaleMode: boolean;
+
   setFocused: (id: string | null) => void;
   setSelected: (id: string | null) => void;
   setHovered: (id: string | null) => void;
@@ -56,6 +65,7 @@ interface ExploreState {
   setSimulationJd: (jd: number) => void;
   setUseRealOrbits: (v: boolean) => void;
   setGalactic: (v: boolean) => void;
+  setEarthMoonScaleMode: (v: boolean) => void;
   reset: () => void;
 }
 
@@ -77,9 +87,20 @@ export const useExploreStore = create<ExploreState>((set) => ({
   simulationJd: jdNow(),
   useRealOrbits: false,
   galactic: false,
+  earthMoonScaleMode: false,
 
   setFocused: (id) => set({ focusedBodyId: id }),
-  setSelected: (id) => set({ selectedBodyId: id, focusedBodyId: id ?? null }),
+  /**
+   * When selecting a body, camera focus follows. Clearing selection only
+   * hides the detail panel; focus is unchanged so the user keeps their
+   * current view. Use setFocused(null) (e.g. Esc, Reset) to return to
+   * system overview.
+   */
+  setSelected: (id) =>
+    set({
+      selectedBodyId: id,
+      ...(id != null ? { focusedBodyId: id } : {}),
+    }),
   setHovered: (id) => set({ hoveredBodyId: id }),
   togglePlaying: () => set((s) => ({ playing: !s.playing })),
   setPlaying: (v) => set({ playing: v }),
@@ -88,6 +109,7 @@ export const useExploreStore = create<ExploreState>((set) => ({
   setSimulationJd: (jd) => set({ simulationJd: jd }),
   setUseRealOrbits: (v) => set({ useRealOrbits: v }),
   setGalactic: (v) => set({ galactic: v }),
+  setEarthMoonScaleMode: (v) => set({ earthMoonScaleMode: v }),
   reset: () =>
     set({
       focusedBodyId: null,

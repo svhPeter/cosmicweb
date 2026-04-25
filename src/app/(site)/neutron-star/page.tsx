@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { NeutronStarExperience } from "@/components/concepts/neutron-star/neutron-star-experience";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Card } from "@/components/ui/card";
+import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Neutron stars — the lighthouses of the galaxy",
@@ -13,6 +14,17 @@ export const metadata: Metadata = {
     description:
       "A 20 km ball of nuclear matter with a magnetic field a trillion times Earth's — and two beams that sweep across the galaxy every time it spins.",
     type: "article",
+    // No single famous photograph exists — pulsars are resolved through
+    // timing and X-ray spectroscopy. Site OG keeps the social card from
+    // rendering blank.
+    images: [
+      {
+        url: site.ogImage,
+        width: 1200,
+        height: 630,
+        alt: "Cosmos — phenomena at the edges of physics",
+      },
+    ],
   },
 };
 

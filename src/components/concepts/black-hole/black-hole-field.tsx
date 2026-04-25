@@ -58,6 +58,13 @@ export interface BlackHoleFieldProps {
   diskInnerRs?: number;
   /** Disk outer radius as a multiple of r_s. */
   diskOuterRs?: number;
+  /**
+   * Scales the per-frame delta fed into the shader's time uniform.
+   * 1.0 is cinematic default; a small non-zero value (e.g. 0.08) keeps
+   * the scene from strobing for users who prefer reduced motion while
+   * letting camera interaction still respond normally.
+   */
+  timeScale?: number;
 }
 
 export function BlackHoleField({
@@ -65,6 +72,7 @@ export function BlackHoleField({
   schwarzschildRadius = 1.0,
   diskInnerRs = 3.0,
   diskOuterRs = 12.0,
+  timeScale = 1.0,
 }: BlackHoleFieldProps) {
   const tier = useDeviceTier();
   const { camera, size } = useThree();
@@ -74,7 +82,7 @@ export function BlackHoleField({
 
   useFrame((_, delta) => {
     const u = material.uniforms as Record<string, THREE.IUniform>;
-    u.uTime!.value = (u.uTime!.value as number) + delta;
+    u.uTime!.value = (u.uTime!.value as number) + delta * timeScale;
     u.uTimelineT!.value = timelineT;
     (u.uResolution!.value as THREE.Vector2).set(size.width, size.height);
 

@@ -52,11 +52,18 @@ export interface WormholeFieldProps {
   timelineT?: number;
   /** Throat radius in scene units. */
   throatRadius?: number;
+  /**
+   * Scales per-frame delta into the shader's time uniform. 1.0 is the
+   * cinematic default; a small value near zero honours
+   * `prefers-reduced-motion` without freezing the frame loop.
+   */
+  timeScale?: number;
 }
 
 export function WormholeField({
   timelineT = 0,
   throatRadius = 2.0,
+  timeScale = 1.0,
 }: WormholeFieldProps) {
   const tier = useDeviceTier();
   const { camera, size } = useThree();
@@ -66,7 +73,7 @@ export function WormholeField({
 
   useFrame((_, delta) => {
     const u = material.uniforms as Record<string, THREE.IUniform>;
-    u.uTime!.value = (u.uTime!.value as number) + delta;
+    u.uTime!.value = (u.uTime!.value as number) + delta * timeScale;
     u.uTimelineT!.value = timelineT;
     (u.uResolution!.value as THREE.Vector2).set(size.width, size.height);
 
@@ -75,7 +82,10 @@ export function WormholeField({
     (u.uInvProjection!.value as THREE.Matrix4).copy(camera.projectionMatrixInverse);
     (u.uInvView!.value as THREE.Matrix4).copy(camera.matrixWorld);
 
-    u.uThroatR!.value = throatRadius;
+    // ~1% radial “breath” so the interface feels alive, not a static hero.
+    const t = u.uTime!.value as number;
+    const breath = 1.0 + 0.012 * Math.sin(t * 0.32);
+    u.uThroatR!.value = throatRadius * breath;
   });
 
   return (
@@ -249,9 +259,11 @@ function buildMaterial({ quality }: MaterialOptions): THREE.ShaderMaterial {
 
         // Warm inner core + cooler outer arms.
         vec3 coreCol = vec3(1.00, 0.85, 0.55);
-        vec3 armCol  = vec3(1.00, 0.55, 0.70);
+        // Rose + cool violet — speculative “alien” read without aping
+        // any one film palette.
+        vec3 armCol  = vec3(0.88, 0.42, 0.80);
         col += coreCol * diskShade * 1.9;
-        col += armCol  * diskShade * smoothstep(0.2, 0.55, rPlane) * 0.8;
+        col += armCol  * diskShade * smoothstep(0.2, 0.55, rPlane) * 0.85;
 
         // Bright pinpoint galactic nucleus.
         float nucleus = exp(-pow((1.0 - along) * 32.0, 2.0));
@@ -383,6 +395,10 @@ function buildMaterial({ quality }: MaterialOptions): THREE.ShaderMaterial {
             float rad = length(rel) / uThroatR;
             float swirl = 0.5 + 0.5 * sin(10.0 * phi + uTime * 1.6 - rad * 6.0);
             col += vec3(0.9, 0.75, 0.55) * pow(swirl, 3.0) * (1.0 - centerT) * 0.45;
+            // Counter-rotating, cooler harmonic — parallax/depth, not
+            // a second vortex: breaks “flat disc” in the window.
+            float sw2 = 0.5 + 0.5 * sin(-6.0 * phi - uTime * 0.9 - rad * 4.5);
+            col += vec3(0.45, 0.3, 0.65) * pow(abs(sw2 - 0.5) * 2.0, 2.0) * (1.0 - centerT) * 0.2;
 
             // Einstein ring.
             vec3 closest = O + D * dot(-O, D);
@@ -420,13 +436,44 @@ function buildMaterial({ quality }: MaterialOptions): THREE.ShaderMaterial {
         }
 
         // Add the ring highlight — pulsing, with a wider soft halo.
+        // On chromatic-capable tiers we sample the ring at three slightly
+        // different impact parameters so the rim becomes a thin
+        // R/G/B-dispersed band — real wavelength-dependent deflection,
+        // not a post effect, completing the chromatic story already
+        // applied to the lensed near-sky.
         float pulse = 0.88 + 0.12 * sin(uTime * 1.4);
-        col += vec3(1.0, 0.94, 0.82) * ringMask * 1.8 * pulse;
-        // Soft outer halo so the rim reads as a radiant band, not a line.
         vec3 closestAll = O + D * dot(-O, D);
         float bAll = length(closestAll);
+        if (uUseChromatic == 1) {
+          float kR = (bAll - uThroatR * 1.012) * 7.5;
+          float kG = (bAll - uThroatR)         * 7.5;
+          float kB = (bAll - uThroatR * 0.988) * 7.5;
+          vec3 prism = vec3(exp(-kR * kR), exp(-kG * kG), exp(-kB * kB));
+          col += vec3(1.00, 0.94, 0.82) * prism * 1.8 * pulse;
+        } else {
+          col += vec3(1.0, 0.94, 0.82) * ringMask * 1.8 * pulse;
+        }
+        // Soft outer halo so the rim reads as a radiant band, not a line.
         float halo = exp(-pow((bAll - uThroatR) * 1.6, 2.0));
         col += vec3(0.90, 0.70, 0.45) * halo * 0.30 * pulse;
+
+        // Stacked “shells” of glow — tier-gated. Reads as layered lensing
+        // structure (inspired by elliptic, multi-mode Einstein rings) while
+        // remaining speculative / non-claiming.
+        if (uRimDetail == 1) {
+          float r0 = uThroatR;
+          float t = bAll;
+          float innerViolet = exp(-pow((t - r0 * 0.86) * 3.1, 2.0));
+          col += mix(vec3(0.22, 0.1, 0.42), vec3(0.6, 0.28, 0.72), 0.5)
+            * innerViolet * 0.52
+            * (0.9 + 0.1 * sin(uTime * 0.65));
+          float midPeach = exp(-pow((t - r0 * 0.97) * 4.2, 2.0));
+          col += vec3(1.0, 0.5, 0.35) * midPeach * 0.2 * pulse;
+          float outerRose = exp(-pow((t - r0 * 1.2) * 1.85, 2.0));
+          col += vec3(0.5, 0.2, 0.48) * outerRose
+            * 0.24
+            * (0.88 + 0.12 * sin(uTime * 0.85 + 0.4));
+        }
 
         // Rim flecks — high-frequency detail so the ring doesn't look
         // synthetic at close range. Disabled on low-tier.

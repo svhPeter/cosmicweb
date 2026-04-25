@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
@@ -47,6 +47,7 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
   const { camera } = useThree();
   const hovered = useExploreStore((s) => s.hoveredBodyId) === body.id;
   const selected = useExploreStore((s) => s.selectedBodyId) === body.id;
+  const focused = useExploreStore((s) => s.focusedBodyId) === body.id;
   const coreRef = useRef<THREE.Mesh>(null);
   const chromoRef = useRef<THREE.Mesh>(null);
   const bloomRef = useRef<THREE.Mesh>(null);
@@ -97,6 +98,56 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
 
   const emissive = body.render.emissiveHex ?? body.render.colorHex;
 
+  const limbalHalo = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        depthTest: true,
+        side: THREE.BackSide,
+        blending: THREE.AdditiveBlending,
+        toneMapped: false,
+        uniforms: {
+          uCInner: { value: new THREE.Color("#fff8ef") },
+          uCOuter: { value: new THREE.Color("#f5a050").lerp(new THREE.Color("#ffd8a0"), 0.5) },
+        },
+        vertexShader: /* glsl */ `
+          varying vec3 vN;
+          varying vec3 vPE;
+          void main() {
+            vN = normalize(normalMatrix * normal);
+            vPE = (modelViewMatrix * vec4(position, 1.0)).xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: /* glsl */ `
+          precision highp float;
+          varying vec3 vN;
+          varying vec3 vPE;
+          uniform vec3 uCInner;
+          uniform vec3 uCOuter;
+          void main() {
+            vec3 v = normalize(-vPE);
+            float ndv = max(dot(vN, v), 0.0);
+            // Limb-only: no solid disc — brightness peaks in a thin edge shell.
+            float t = pow(1.0 - ndv, 2.4);
+            float t2 = pow(1.0 - ndv, 5.0) * 0.35;
+            vec3 col = mix(uCInner, uCOuter, 1.0 - ndv);
+            float a = 0.07 * t + 0.09 * t2;
+            gl_FragColor = vec4(col * a, a);
+          }
+        `,
+      }),
+    []
+  );
+
+  useEffect(
+    () => () => {
+      limbalHalo.dispose();
+    },
+    [limbalHalo]
+  );
+
   return (
     <group ref={rootRef}>
       {/* Core — animated granulation shader. */}
@@ -120,32 +171,37 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
         <primitive attach="material" object={coreMat} />
       </mesh>
 
+      {/* Thin shell: only the limb (grazing) lights up — not a full yellow disc. */}
+      <mesh>
+        <sphereGeometry args={[radius * 1.1, 48, 48]} />
+        <primitive object={limbalHalo} attach="material" />
+      </mesh>
+
       {/* Chromosphere — thin fresnel-ish glow shell. */}
       <mesh ref={chromoRef}>
         <sphereGeometry args={[radius * 1.06, 56, 56]} />
         <primitive attach="material" object={chromoMat} />
       </mesh>
 
-      {/* Bloom-lite — cheap additive halo (keeps perf; no postprocess). */}
+      {/* Tapered aureole: warm → cooler with distance; low opacity to avoid a flat "blob". */}
       <mesh ref={bloomRef}>
-        <sphereGeometry args={[radius * 1.18, 40, 40]} />
+        <sphereGeometry args={[radius * 1.32, 40, 40]} />
         <meshBasicMaterial
-          color={emissive}
+          color={new THREE.Color(emissive).lerp(new THREE.Color("#ffc966"), 0.35)}
           transparent
-          opacity={0.18}
+          opacity={0.05}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
           toneMapped={false}
         />
       </mesh>
 
-      {/* Outer halo — very soft warm falloff that anchors the system in overview. */}
       <mesh ref={haloRef}>
-        <sphereGeometry args={[radius * 2.4, 40, 40]} />
+        <sphereGeometry args={[radius * 2.05, 32, 32]} />
         <meshBasicMaterial
-          color={emissive}
+          color={new THREE.Color("#e87830").lerp(new THREE.Color("#4a1a0a"), 0.2)}
           transparent
-          opacity={0.05}
+          opacity={0.012}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
           toneMapped={false}
@@ -178,12 +234,12 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
         color={emissive}
       />
 
-      {(hovered || selected) && (
+      {(hovered || selected || focused) ? (
         <mesh>
           <ringGeometry args={[radius * 1.6, radius * 1.68, 96]} />
           <meshBasicMaterial color="#ffffff" transparent opacity={0.35} side={THREE.DoubleSide} />
         </mesh>
-      )}
+      ) : null}
     </group>
   );
 }
@@ -432,7 +488,7 @@ function makeCoronaMaterial(colorHex: string): CoronaMat {
         // Thin outer fade to prevent harsh square edges.
         a *= smoothstep(1.12, 0.92, r);
 
-        gl_FragColor = vec4(col, a * 0.85);
+        gl_FragColor = vec4(col, a * 0.52);
       }
     `,
   }) as CoronaMat;

@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ChevronLeft, Sparkles, CircleDot, Infinity as InfinityIcon } from "lucide-react";
+import {
+  ChevronLeft,
+  Sparkles,
+  CircleDot,
+  Infinity as InfinityIcon,
+  Ruler,
+  Info,
+} from "lucide-react";
 
 import { useExploreStore } from "@/store/explore-store";
 import { bodies } from "@/data-static/bodies";
@@ -38,11 +45,19 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
   const selectedId = useExploreStore((s) => s.selectedBodyId);
   const setSelected = useExploreStore((s) => s.setSelected);
   const setFocused = useExploreStore((s) => s.setFocused);
+  const detailsHidden = Boolean(focusedId && !selectedId);
   const useRealOrbits = useExploreStore((s) => s.useRealOrbits);
   const galactic = useExploreStore((s) => s.galactic);
+  const earthMoonScaleMode = useExploreStore((s) => s.earthMoonScaleMode);
   const primaryId = selectedId ?? focusedId;
   const primary = primaryId ? bodies.find((b) => b.id === primaryId) : null;
   const v = primary ? orbitalSpeedKmS(primary) : null;
+  const showEmHint =
+    !galactic && !earthMoonScaleMode
+      ? focusedId === "earth" || focusedId === "moon" || selectedId === "earth" || selectedId === "moon"
+      : false;
+  const showEmScaleNote =
+    earthMoonScaleMode && (focusedId === "earth" || focusedId === "moon" || selectedId === "earth" || selectedId === "moon");
 
   // Canonical single-line science readout: scientists quote km/s first,
   // km/h is the familiar everyday unit, mph exists for the same readers
@@ -77,7 +92,7 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
       >
         <Link
           href="/"
-          className="pointer-events-auto inline-flex shrink-0 items-center gap-1.5 cosmos-chip transition-colors hover:text-foreground"
+          className="pointer-events-auto inline-flex min-h-11 shrink-0 items-center gap-1.5 cosmos-chip px-3.5 py-2 transition-colors hover:text-foreground"
           aria-label="Back to Cosmos home"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
@@ -88,7 +103,20 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
             the available width (focused-body readout + clock + frame chip
             together overflow small phones). `justify-end` keeps the
             canonical order top-aligned-right. */}
-        <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+        <div className="pointer-events-auto flex max-w-[min(100%,calc(100vw-7rem))] flex-wrap items-center justify-end gap-1.5 sm:max-w-none sm:gap-3">
+          {detailsHidden ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (focusedId) setSelected(focusedId);
+              }}
+              className="cosmos-chip inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-3.5 py-2 transition-colors hover:text-foreground sm:min-w-0"
+              aria-label="Show body details"
+            >
+              <Info className="h-4 w-4 shrink-0 text-accent" aria-hidden />
+              <span className="hidden min-[400px]:inline">Details</span>
+            </button>
+          ) : null}
           {primary ? (
             <button
               type="button"
@@ -96,7 +124,7 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
                 setSelected(null);
                 setFocused(null);
               }}
-              className="cosmos-chip transition-colors hover:text-foreground"
+              className="cosmos-chip inline-flex min-h-11 shrink-0 items-center px-3.5 py-2 transition-colors hover:text-foreground"
             >
               Reset view
             </button>
@@ -104,7 +132,9 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
           {useRealOrbits ? <SimulationClock /> : null}
           {v ? (
             <span className="cosmos-chip tabular-nums">
-              <span className="hidden sm:inline">System · </span>Orbit speed{" "}
+              <span className="hidden sm:inline">System · </span>
+              <span className="hidden sm:inline">Orbit speed </span>
+              <span className="sm:hidden">Orbit </span>
               <span className="text-foreground/90">{formatNumber(v, 1)} km/s</span>{" "}
               <span className="hidden text-muted-foreground/70 sm:inline">avg</span>
             </span>
@@ -154,6 +184,73 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
         </div>
       </header>
 
+      {/* Scale Mode readout. Position differs by viewport because the
+          bottom of the screen is contested space:
+            - Desktop: selection panel is bottom-right, so bottom-left is
+              free for the educational readout in its full editorial form.
+            - Mobile: the selection panel takes the entire bottom strip,
+              so the readout floats top-left under the back-chip in a
+              condensed form (still readable, no collision).
+          Reveal is conditional rather than opacity — the panel is a
+          stand-alone educational artefact, not a UI affordance, so it
+          shouldn't reserve layout when off. */}
+      {earthMoonScaleMode ? (
+        <>
+          {/* Mobile: condensed pill at top-left, below the back-chip. */}
+          <div
+            className={[
+              "pointer-events-none absolute left-0 top-0 z-30 sm:hidden",
+              "pl-[max(1rem,env(safe-area-inset-left))]",
+              "pt-[max(4.5rem,calc(env(safe-area-inset-top)+4.25rem))]",
+            ].join(" ")}
+          >
+            <div className="cosmos-panel pointer-events-auto max-w-[min(100%,18rem)] px-3 py-2">
+              <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-accent">
+                <Ruler className="h-3 w-3" /> Scale · Earth–Moon
+              </p>
+              <p className="mt-1 font-display text-sm tracking-tight text-foreground/95 tabular-nums">
+                384,400 km <span className="text-muted-foreground/80 text-xs">· 30 Earth ⌀</span>
+              </p>
+              {showEmScaleNote ? (
+                <p className="mt-1.5 text-[9px] leading-snug text-muted-foreground/80">
+                  True gap — both bodies can look small; the line shows distance, not size.
+                </p>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Desktop: full editorial readout at bottom-left. */}
+          <div
+            className={[
+              "pointer-events-none absolute bottom-0 left-0 z-30 hidden sm:block",
+              "sm:pl-[max(1.5rem,env(safe-area-inset-left))]",
+              "sm:pb-[max(6rem,calc(env(safe-area-inset-bottom)+5rem))]",
+            ].join(" ")}
+          >
+            <div className="cosmos-panel pointer-events-auto max-w-[18rem] px-4 py-3">
+              <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-accent">
+                <Ruler className="h-3 w-3" /> Scale Mode · Earth–Moon
+              </p>
+              <p className="mt-2 font-display text-lg tracking-tight text-foreground/95 tabular-nums">
+                384,400 km
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                ≈ 30 Earth diameters · 60 Earth radii
+              </p>
+              <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground/85">
+                Every other planet in the Solar System would fit in the gap between us and the Moon.
+              </p>
+              {showEmScaleNote ? (
+                <p className="mt-2 border-t border-border/50 pt-2 text-[10px] leading-relaxed text-muted-foreground/75">
+                  Bodies can look small here — the separation line is the lesson. The Sun still lights both;
+                  Earth and Moon are shown moving together.
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </>
+      ) : null}
+
       <footer
         className={[
           "pointer-events-none absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-3 sm:gap-4",
@@ -165,6 +262,31 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
           "sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]",
         ].join(" ")}
       >
+        {showEmHint ? (
+          <p className="pointer-events-none max-w-2xl px-3 text-center text-[10px] leading-relaxed text-muted-foreground/85 sm:px-4 sm:text-[11px]">
+            <span className="hidden sm:inline">
+              The Moon orbits Earth (path slightly tilted & elliptical); it rotates once per
+              orbit — the same side faces us.
+            </span>
+            <span className="sm:hidden">Orbit + rotation: ~27 d — one face to Earth (tidal lock)</span>
+          </p>
+        ) : null}
+
+        {primary ? (
+          <div className="md:hidden">
+            <button
+              type="button"
+              onClick={() => {
+                setSelected(null);
+                setFocused(null);
+              }}
+              className="cosmos-chip pointer-events-auto inline-flex min-h-11 w-full max-w-xs touch-manipulation items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium"
+            >
+              Reset view
+            </button>
+          </div>
+        ) : null}
+
         <TimeControlBar className="pointer-events-auto" />
 
         {/* Concept deep-link chips. Hidden for the first 10s to keep the
@@ -181,7 +303,7 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
           <Link
             href="/black-hole"
             tabIndex={conceptsRevealed ? 0 : -1}
-            className="pointer-events-auto cosmos-chip inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+            className="pointer-events-auto cosmos-chip inline-flex min-h-11 touch-manipulation items-center gap-1.5 px-3.5 py-2 transition-colors hover:text-foreground"
           >
             <CircleDot className="h-3 w-3 text-accent" aria-hidden />
             <span>Approach the black hole</span>
@@ -189,7 +311,7 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
           <Link
             href="/wormhole"
             tabIndex={conceptsRevealed ? 0 : -1}
-            className="pointer-events-auto cosmos-chip inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+            className="pointer-events-auto cosmos-chip inline-flex min-h-11 touch-manipulation items-center gap-1.5 px-3.5 py-2 transition-colors hover:text-foreground"
           >
             <InfinityIcon className="h-3 w-3 text-accent" aria-hidden />
             <span>Enter a wormhole</span>

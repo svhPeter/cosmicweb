@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import { PanelLeftOpen, PanelLeftClose } from "lucide-react";
 
+import { getBodyBySlug } from "@/data-static/bodies";
+import { useExploreStore } from "@/store/explore-store";
 import { ExploreHud } from "@/components/space/explore-hud";
 import { ExploreSidebar } from "@/components/space/explore-sidebar";
 import { SelectionPanel } from "@/components/space/selection-panel";
@@ -31,18 +34,34 @@ const SolarSystemScene = dynamic(
 export default function Experience() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [introActive, setIntroActive] = useState(false);
+  const searchParams = useSearchParams();
+  const focusParam = searchParams.get("focus");
+  const focusBody = useMemo(
+    () => (focusParam ? getBodyBySlug(focusParam) : undefined),
+    [focusParam]
+  );
+  const skipIntro = !!focusBody;
+
+  useEffect(() => {
+    if (!focusBody) return;
+    useExploreStore.getState().setSelected(focusBody.id);
+  }, [focusBody]);
 
   const closeSidebar = () => setSidebarOpen(false);
 
-  // ESC closes the mobile drawer — echoes the focus-reset binding, so a
-  // single key returns the viewer to the canonical overview.
+  // While the body list drawer is open, Esc closes it only — the scene’s
+  // own Esc handler (camera) must not also reset focus. Capture runs first.
   useEffect(() => {
     if (!sidebarOpen) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") closeSidebar();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        closeSidebar();
+      }
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [sidebarOpen]);
 
   return (
@@ -50,11 +69,12 @@ export default function Experience() {
       <SceneErrorBoundary>
         <SolarSystemScene
           onIntroActiveChange={setIntroActive}
+          skipIntro={skipIntro}
           hud={
             <>
               <div
                 className={[
-                  "relative z-20 transition-all duration-700",
+                  "absolute inset-0 z-20 transition-all duration-700",
                   introActive
                     ? "translate-y-2 opacity-0 pointer-events-none"
                     : "translate-y-0 opacity-100",
@@ -63,10 +83,10 @@ export default function Experience() {
                 <ExploreHud onToggleSidebar={() => setSidebarOpen((v) => !v)} sidebarOpen={sidebarOpen} />
               </div>
 
-              {/* Desktop sidebar: always visible */}
+              {/* Tablet/desktop sidebar — list stays visible for solar-system wayfinding. */}
               <div
                 className={[
-                  "pointer-events-none absolute left-6 top-24 z-20 hidden lg:block transition-opacity duration-700",
+                  "pointer-events-none absolute left-4 top-[5.5rem] z-30 hidden md:top-24 md:block md:pl-1 transition-opacity duration-700",
                   introActive ? "opacity-0" : "opacity-100",
                 ].join(" ")}
               >
@@ -83,7 +103,7 @@ export default function Experience() {
                 tabIndex={-1}
                 onClick={closeSidebar}
                 className={[
-                  "absolute inset-0 z-20 bg-background/30 backdrop-blur-[2px] lg:hidden transition-opacity duration-300",
+                  "absolute inset-0 z-20 bg-background/30 backdrop-blur-[2px] md:hidden transition-opacity duration-300",
                   sidebarOpen
                     ? "pointer-events-auto opacity-100"
                     : "pointer-events-none opacity-0",
@@ -93,9 +113,9 @@ export default function Experience() {
               {/* Mobile/tablet sidebar: toggled drawer from the left */}
               <div
                 className={[
-                  "absolute z-30 transition-all duration-300 lg:hidden",
+                  "absolute z-30 transition-all duration-300 md:hidden",
                   "left-[max(1rem,env(safe-area-inset-left))]",
-                  "top-[max(5rem,calc(env(safe-area-inset-top)+4.5rem))]",
+                  "top-[max(5.25rem,calc(env(safe-area-inset-top)+4.75rem))]",
                   introActive ? "opacity-0 pointer-events-none" : "",
                   sidebarOpen
                     ? "translate-x-0 opacity-100 pointer-events-auto"
@@ -114,9 +134,9 @@ export default function Experience() {
                 aria-label={sidebarOpen ? "Hide body list" : "Show body list"}
                 aria-expanded={sidebarOpen}
                 className={[
-                  "pointer-events-auto absolute z-40 inline-flex h-10 w-10 items-center justify-center rounded-full cosmos-panel lg:hidden transition-opacity duration-700",
+                  "pointer-events-auto absolute z-40 inline-flex h-10 w-10 items-center justify-center rounded-full cosmos-panel md:hidden transition-opacity duration-700",
                   "left-[max(1rem,env(safe-area-inset-left))]",
-                  "top-[max(5rem,calc(env(safe-area-inset-top)+4.5rem))]",
+                  "top-[max(5.25rem,calc(env(safe-area-inset-top)+4.75rem))]",
                   introActive ? "opacity-0 pointer-events-none" : "opacity-100",
                 ].join(" ")}
               >
@@ -129,7 +149,7 @@ export default function Experience() {
 
               <div
                 className={[
-                  "relative z-20 transition-opacity duration-700",
+                  "relative z-[100] transition-opacity duration-700",
                   introActive ? "opacity-0 pointer-events-none" : "opacity-100",
                 ].join(" ")}
               >

@@ -20,12 +20,16 @@ export interface WormholeSceneProps {
  * skies (near outside + far through the throat) every frame using the
  * live orbit camera's transform.
  */
-export function WormholeScene(_: WormholeSceneProps = {}) {
+export function WormholeScene({ reducedMotion = false }: WormholeSceneProps = {}) {
   const tier = useDeviceTier();
   const tierDpr: [number, number] =
     tier === "low" ? [1, 1.35] : tier === "medium" ? [1, 1.75] : [1, 2];
 
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
+
+  // Canonical concept-line tone: exposure 1.12, FOV 55. Shared across
+  // the three concept pages so gamma and framing feel identical.
+  const timeScale = reducedMotion ? 0.08 : 1.0;
 
   return (
     <Canvas
@@ -35,17 +39,17 @@ export function WormholeScene(_: WormholeSceneProps = {}) {
         antialias: tier !== "low",
         powerPreference: "high-performance",
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.1,
+        toneMappingExposure: 1.12,
         outputColorSpace: THREE.SRGBColorSpace,
       }}
-      camera={{ position: [0, 1.4, 12], fov: 58, near: 0.05, far: 4000 }}
+      camera={{ position: [0, 1.4, 12], fov: 55, near: 0.05, far: 4000 }}
       className="h-full w-full"
     >
       <AdaptiveDpr pixelated={false} />
       <AdaptiveEvents />
 
       <Suspense fallback={null}>
-        <WormholeField throatRadius={2.0} />
+        <WormholeField throatRadius={2.0} timeScale={timeScale} />
 
         <OrbitControls
           ref={controlsRef}

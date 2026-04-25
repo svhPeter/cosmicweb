@@ -28,12 +28,17 @@ export interface BlackHoleSceneProps {
  * re-orients, Einstein ring stretches — all physics-driven, all tied
  * to the user's real viewpoint.
  */
-export function BlackHoleScene(_: BlackHoleSceneProps = {}) {
+export function BlackHoleScene({ reducedMotion = false }: BlackHoleSceneProps = {}) {
   const tier = useDeviceTier();
   const tierDpr: [number, number] =
     tier === "low" ? [1, 1.35] : tier === "medium" ? [1, 1.75] : [1, 2];
 
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
+
+  // Canonical concept-line tone: exposure 1.12, FOV 55. Matches the
+  // wormhole and neutron-star scenes so the three pages read as one
+  // editorial line rather than three shaders with drifting gamma.
+  const timeScale = reducedMotion ? 0.08 : 1.0;
 
   return (
     <Canvas
@@ -43,7 +48,7 @@ export function BlackHoleScene(_: BlackHoleSceneProps = {}) {
         antialias: tier !== "low",
         powerPreference: "high-performance",
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.15,
+        toneMappingExposure: 1.12,
         outputColorSpace: THREE.SRGBColorSpace,
       }}
       // Starting pose: slightly above the disk plane, back a respectful
@@ -60,6 +65,7 @@ export function BlackHoleScene(_: BlackHoleSceneProps = {}) {
           schwarzschildRadius={1.0}
           diskInnerRs={3.0}
           diskOuterRs={13.0}
+          timeScale={timeScale}
         />
 
         <OrbitControls

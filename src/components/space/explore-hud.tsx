@@ -76,7 +76,7 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
     <>
       <header
         className={[
-          "pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-3 pt-4 sm:gap-4 sm:pt-6",
+          "pointer-events-none absolute inset-x-0 top-0 z-[130] flex items-start justify-between gap-3 pt-4 sm:gap-4 sm:pt-6",
           // Safe-area-aware so the header clears status bars / notches on
           // iOS PWAs and Android gestures without hardcoded magic numbers.
           "pl-[max(1rem,env(safe-area-inset-left))]",
@@ -251,7 +251,7 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
 
       <footer
         className={[
-          "pointer-events-auto absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-3 sm:gap-4",
+          "pointer-events-auto absolute inset-x-0 bottom-0 z-[130] flex flex-col items-center gap-3 sm:gap-4",
           "pl-[max(1rem,env(safe-area-inset-left))]",
           "pr-[max(1rem,env(safe-area-inset-right))]",
           "pb-[max(1rem,env(safe-area-inset-bottom))]",

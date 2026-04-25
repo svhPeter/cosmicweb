@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
@@ -26,10 +27,11 @@ interface Concept {
   essence: string;
   status: ConceptStatus;
   statusLabel: string;
-  /** Tailwind classes for the poster background. */
-  posterClassName?: string;
-  /** Decorative foreground layer — a simple CSS rendition of the concept. */
-  Poster: () => React.ReactNode;
+  /** High-quality static image (real photo, NASA/observatory art, or EHT). */
+  posterSrc: string;
+  /** `object-position` to favour an oblique, depth-reading crop. */
+  posterPosition: string;
+  posterAlt: string;
 }
 
 const CONCEPTS: readonly Concept[] = [
@@ -40,7 +42,9 @@ const CONCEPTS: readonly Concept[] = [
       "A dark gravity well that traps light. The only astrophysical object humanity has photographed that warps spacetime at this scale.",
     status: "real-time",
     statusLabel: "Real-time simulation",
-    Poster: BlackHolePoster,
+    posterSrc: "/images/eht/m87.jpg",
+    posterPosition: "56% 48%",
+    posterAlt: "M87* — Event Horizon Telescope shadow and asymmetric accretion ring",
   },
   {
     href: "/wormhole",
@@ -49,7 +53,9 @@ const CONCEPTS: readonly Concept[] = [
       "A theoretical tunnel through bent spacetime. Predicted by Einstein in 1935. Never observed, anywhere, by anyone.",
     status: "theoretical",
     statusLabel: "Theoretical · never observed",
-    Poster: WormholePoster,
+    posterSrc: "/images/concepts/wormhole-nasa-bossinas.jpg",
+    posterPosition: "50% 42%",
+    posterAlt: "NASA concept art — light paths through a traversable-type wormhole geometry",
   },
   {
     href: "/neutron-star",
@@ -58,7 +64,10 @@ const CONCEPTS: readonly Concept[] = [
       "A stellar core compressed to the density of an atomic nucleus. Spinning hundreds of times per second, sweeping beams of radiation across the galaxy.",
     status: "real-time",
     statusLabel: "Real-time simulation",
-    Poster: NeutronStarPoster,
+    posterSrc: "/images/concepts/neutron-star-crab-great-observatories.jpg",
+    posterPosition: "48% 46%",
+    posterAlt:
+      "Crab Nebula and pulsar — Chandra, Hubble, and Spitzer composite (NASA Great Observatories)",
   },
 ] as const;
 
@@ -76,10 +85,9 @@ export default function ConceptsPage() {
         />
       </section>
 
-      {/* The gallery. Three cards, same shape, different emphasis.
-          Posters are static CSS — we deliberately do not mount live
-          shaders in the grid. Visitors reach the real simulation by
-          clicking through. */}
+      {/* The gallery. Posters are real photos / observatory or NASA
+          art (see public/images/concepts/LICENSES) — not vector icons.
+          Live simulation opens on the destination page. */}
       <section
         aria-label="Concept experiences"
         className="container section-y-tight"
@@ -137,15 +145,23 @@ function ConceptCard({ concept }: { concept: Concept }) {
       {/* Poster — aspect-ratio locked for CLS-free layout. */}
       <div
         aria-hidden
-        className={cn(
-          "relative aspect-[4/3] w-full overflow-hidden",
-          // Keep backgrounds calm and consistent; the Poster supplies the identity.
-          concept.posterClassName ?? "bg-[radial-gradient(circle_at_50%_40%,hsl(var(--glass)/0.9)_0%,hsl(var(--background))_70%)]"
-        )}
+        className="relative aspect-[4/3] w-full overflow-hidden bg-black"
       >
-        <concept.Poster />
-        {/* Top-edge glow, matches the subtle accent used elsewhere. */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
+        <Image
+          src={concept.posterSrc}
+          alt={concept.posterAlt}
+          fill
+          className="object-cover"
+          style={{ objectPosition: concept.posterPosition }}
+          sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw"
+          quality={90}
+        />
+        {/* Vignette only — keep the photograph legible, not a flat poster tint. */}
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/80 via-background/0 to-background/20"
+          aria-hidden
+        />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/35 to-transparent" />
       </div>
 
       <div className="flex flex-1 flex-col gap-4 p-6 sm:p-7">
@@ -203,168 +219,3 @@ function ConceptCard({ concept }: { concept: Concept }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Posters                                                              */
-/*                                                                      */
-/* These are purely decorative CSS renditions. They hint at the         */
-/* concept's palette and silhouette without mounting a WebGL context.   */
-/* Anything more expensive than a few divs + gradients belongs on the   */
-/* concept page itself, not in the hub grid.                            */
-/* ------------------------------------------------------------------ */
-
-function BlackHolePoster() {
-  return (
-    <>
-      {/* Photographic anchor: EHT (M87*) — CC BY 4.0, already shipped in /public/images/eht. */}
-      <div aria-hidden className="absolute inset-0">
-        <img
-          src="/images/eht/m87.jpg"
-          alt=""
-          className="h-full w-full object-cover opacity-55 mix-blend-screen"
-          loading="lazy"
-          decoding="async"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/30" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/40" />
-      </div>
-
-      {/* Accretion disk — flattened ellipse with bright leading edge. */}
-      <div
-        aria-hidden
-        className="absolute left-1/2 top-1/2 h-[36%] w-[86%] -translate-x-1/2 -translate-y-1/2 rotate-[-12deg] rounded-full"
-        style={{
-          background:
-            "radial-gradient(ellipse at 30% 50%, rgba(255,200,120,0.95) 0%, rgba(240,130,40,0.7) 28%, rgba(120,50,15,0.35) 58%, rgba(0,0,0,0) 80%)",
-          filter: "blur(0.5px)",
-        }}
-      />
-      {/* Photon ring — thin, hot halo. */}
-      <div
-        aria-hidden
-        className="absolute left-1/2 top-1/2 h-[42%] w-[42%] -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{
-          boxShadow:
-            "0 0 24px 2px rgba(255,180,100,0.55), inset 0 0 0 1px rgba(255,210,160,0.85)",
-        }}
-      />
-      {/* Event horizon silhouette — pure black disc. */}
-      <div
-        aria-hidden
-        className="absolute left-1/2 top-1/2 h-[34%] w-[34%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-black"
-      />
-    </>
-  );
-}
-
-function WormholePoster() {
-  return (
-    <>
-      {/* SVG turbulence gives a premium “lensing” feel without WebGL. */}
-      <svg
-        aria-hidden
-        className="absolute inset-0 h-full w-full"
-        viewBox="0 0 100 75"
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <radialGradient id="wh-core" cx="45%" cy="45%" r="60%">
-            <stop offset="0%" stopColor="rgba(210,230,255,0.95)" />
-            <stop offset="35%" stopColor="rgba(120,160,255,0.55)" />
-            <stop offset="70%" stopColor="rgba(35,20,85,0.85)" />
-            <stop offset="100%" stopColor="rgba(5,6,10,1)" />
-          </radialGradient>
-          <filter id="wh-noise">
-            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" />
-            <feDisplacementMap in="SourceGraphic" scale="10" />
-          </filter>
-        </defs>
-
-        {/* Rim glow */}
-        <ellipse
-          cx="50"
-          cy="38"
-          rx="28"
-          ry="18"
-          fill="none"
-          stroke="rgba(160,120,255,0.55)"
-          strokeWidth="6"
-          filter="url(#wh-noise)"
-          opacity="0.85"
-        />
-        <ellipse
-          cx="50"
-          cy="38"
-          rx="28"
-          ry="18"
-          fill="none"
-          stroke="rgba(110,208,255,0.45)"
-          strokeWidth="2"
-          opacity="0.9"
-        />
-        {/* Throat */}
-        <ellipse cx="50" cy="38" rx="19" ry="12" fill="url(#wh-core)" opacity="0.95" />
-      </svg>
-
-      {/* Specular “window” highlight */}
-      <div
-        aria-hidden
-        className="absolute left-1/2 top-1/2 h-[18%] w-[18%] -translate-x-[78%] -translate-y-[130%] rounded-full"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(240,250,255,0.85) 0%, rgba(240,250,255,0) 72%)",
-        }}
-      />
-    </>
-  );
-}
-
-function NeutronStarPoster() {
-  return (
-    <>
-      <svg
-        aria-hidden
-        className="absolute inset-0 h-full w-full"
-        viewBox="0 0 100 75"
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <radialGradient id="ns-core" cx="50%" cy="50%" r="55%">
-            <stop offset="0%" stopColor="rgba(255,255,255,1)" />
-            <stop offset="40%" stopColor="rgba(205,235,255,0.92)" />
-            <stop offset="70%" stopColor="rgba(80,150,235,0.65)" />
-            <stop offset="100%" stopColor="rgba(10,20,40,0)" />
-          </radialGradient>
-          <filter id="ns-glow">
-            <feGaussianBlur stdDeviation="1.6" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        {/* Beams */}
-        <g filter="url(#ns-glow)" opacity="0.95">
-          <rect x="46" y="-10" width="8" height="120" fill="rgba(160,210,255,0.18)" transform="rotate(22 50 38)" />
-          <rect x="47.5" y="-10" width="5" height="120" fill="rgba(220,245,255,0.32)" transform="rotate(22 50 38)" />
-          <rect x="46" y="-10" width="8" height="120" fill="rgba(160,210,255,0.12)" transform="rotate(-158 50 38)" />
-          <rect x="47.5" y="-10" width="5" height="120" fill="rgba(200,235,255,0.22)" transform="rotate(-158 50 38)" />
-        </g>
-
-        {/* Core */}
-        <circle cx="50" cy="38" r="6" fill="url(#ns-core)" />
-      </svg>
-
-      {/* Magnetic-field hint: subtle arcs */}
-      <div
-        aria-hidden
-        className="absolute left-1/2 top-1/2 h-[72%] w-[72%] -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{
-          boxShadow:
-            "inset 0 0 0 1px rgba(160,210,255,0.16), 0 0 26px 2px rgba(120,190,255,0.10)",
-          transform: "translate(-50%, -50%) rotate(18deg) scaleY(0.65)",
-        }}
-      />
-    </>
-  );
-}

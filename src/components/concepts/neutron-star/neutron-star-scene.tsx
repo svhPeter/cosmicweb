@@ -51,10 +51,9 @@ export function NeutronStarScene({ reducedMotion = false }: NeutronStarSceneProp
         toneMappingExposure: 1.12,
         outputColorSpace: THREE.SRGBColorSpace,
       }}
-      // Camera starts slightly above the equator at a comfortable
-      // orbit distance. The beams reach ~11 r*, so being ~14 r* out
-      // lets both beams sweep across screen without crowding.
-      camera={{ position: [0, 3.8, 14], fov: 55, near: 0.05, far: 4000 }}
+      // Slight azimuth: both magnetic/rotation geometry and a beam are
+      // visible in perspective (not a symmetric “head-on” lighthouse).
+      camera={{ position: [2.1, 3.2, 13.2], fov: 55, near: 0.05, far: 4000 }}
       className="h-full w-full"
     >
       <AdaptiveDpr pixelated={false} />

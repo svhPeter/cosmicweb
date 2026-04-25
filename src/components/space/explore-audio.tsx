@@ -238,11 +238,15 @@ export function ExploreAudioChip({ className }: { className?: string }) {
     <button
       type="button"
       onClick={toggle}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        e.nativeEvent?.stopImmediatePropagation?.();
+      }}
       aria-pressed={!muted}
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition hover:bg-white/5 hover:text-foreground touch-manipulation",
+        "relative z-10 inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition hover:bg-white/5 hover:text-foreground touch-manipulation",
         className
       )}
     >

@@ -131,10 +131,13 @@ export default function Experience() {
                 )}
               </button>
 
+              {/* `pointer-events-none` here: only the card (auto) is interactive.
+                  Otherwise this layer sits after ExploreHud in the DOM and steals
+                  taps that should hit the time controls + canvas on phones. */}
               <div
                 className={[
-                  "relative z-[100] transition-opacity duration-700",
-                  introActive ? "opacity-0 pointer-events-none" : "opacity-100",
+                  "pointer-events-none relative z-[100] transition-opacity duration-700",
+                  introActive ? "opacity-0" : "opacity-100",
                 ].join(" ")}
               >
                 <SelectionPanel />

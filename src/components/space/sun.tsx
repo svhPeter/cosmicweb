@@ -37,15 +37,10 @@ type CoronaMat = THREE.ShaderMaterial & {
 };
 
 /**
- * A premium layered star (Sun) rendered entirely procedurally.
- *
- * Goals:
- * - animated shader surface (granulation + convection bands)
- * - subtle chromosphere glow
- * - asymmetrical corona
- * - bloom (approximated via additive layers — no postprocessing dependency)
- * - soft breathing light pulse
- * - strong performance (no textures, low-cost noise, small number of layers)
+ * **Sun_1_1391000.usdz**: mesh from the file + albedo/texture from the
+ * same archive (first material `map`, cloned) when present; else
+ * `nasa/image0_lin.jpg`. Procedural layers on top, chromosphere, corona,
+ * limb, lights.
  */
 export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
   const { camera } = useThree();
@@ -61,14 +56,19 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
   const lightRef = useRef<THREE.PointLight>(null);
   const farLightRef = useRef<THREE.PointLight>(null);
   const [nasaModel, setNasaModel] = useState<THREE.Object3D | null>(null);
+  /** Albedo from the USDZ (cloned); falls back to `sunMap` when not present. */
+  const [usdzMap, setUsdzMap] = useState<THREE.Texture | null>(null);
 
-  // NASA Sun 3D Model (public NASA resource). We extract the included
-  // surface texture from the USDZ and use it as the base photosphere map.
-  // Source: https://science.nasa.gov/learn/heat/resource/sun-3d-model/
   const sunMap = useTexture("/textures/sun/nasa/image0_lin.jpg");
+  const photosphereMap = usdzMap ?? sunMap;
   const coreMat = useMemo<SunCoreMat>(
-    () => makeSunCoreMaterial(body.render.colorHex, body.render.emissiveHex, sunMap),
-    [body.render.colorHex, body.render.emissiveHex, sunMap]
+    () =>
+      makeSunCoreMaterial(
+        body.render.colorHex,
+        body.render.emissiveHex,
+        photosphereMap
+      ),
+    [body.render.colorHex, body.render.emissiveHex, photosphereMap]
   );
   const chromoMat = useMemo<ChromosphereMat>(() => makeChromosphereMaterial(body.render.colorHex), [body.render.colorHex]);
   const coronaInnerMat = useMemo<CoronaMat>(() => makeCoronaMaterial(body.render.colorHex, { strength: 0.55, scale: 3.15 }), [body.render.colorHex]);
@@ -92,28 +92,73 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
         g.scale.setScalar(scale);
         g.traverse((o) => {
           if ((o as THREE.Mesh).isMesh) {
-            const m = o as THREE.Mesh;
-            m.castShadow = false;
-            m.receiveShadow = false;
-            // Keep it luminous; post-fx bloom will pick up highlights.
-            const mat = m.material as THREE.Material | THREE.Material[];
-            if (Array.isArray(mat)) {
-              mat.forEach((mm) => ((mm as any).toneMapped = false));
-            } else {
-              (mat as any).toneMapped = false;
+            (o as THREE.Mesh).castShadow = false;
+            (o as THREE.Mesh).receiveShadow = false;
+          }
+        });
+        // Prefer textures shipped inside the same USDZ (albedo on first mesh w/ .map).
+        let extracted: THREE.Texture | null = null;
+        g.traverse((o) => {
+          if (extracted) return;
+          if (!(o as THREE.Mesh).isMesh) return;
+          const mat = (o as THREE.Mesh).material as
+            | THREE.Material
+            | THREE.Material[]
+            | undefined;
+          if (!mat) return;
+          const list = Array.isArray(mat) ? mat : [mat];
+          for (const m of list) {
+            const std = m as THREE.MeshStandardMaterial;
+            const src = std.map ?? std.emissiveMap;
+            if (src) {
+              const c = src.clone();
+              c.colorSpace = THREE.SRGBColorSpace;
+              c.anisotropy = 8;
+              c.needsUpdate = true;
+              extracted = c;
+              return;
             }
           }
         });
+        setUsdzMap(extracted);
         setNasaModel(g);
       })
       .catch(() => {
-        // Keep procedural fallback if model fails.
         setNasaModel(null);
+        setUsdzMap(null);
       });
     return () => {
       cancelled = true;
     };
   }, [radius]);
+
+  useEffect(() => {
+    return () => {
+      if (usdzMap) {
+        usdzMap.dispose();
+      }
+    };
+  }, [usdzMap]);
+
+  // Swap USDZ PBR / baked materials for our photosphere shader (texture + granulation
+  // + limb). Without this, the model looks like a flat matte ball — the "old" look.
+  useEffect(() => {
+    if (!nasaModel) return;
+    nasaModel.traverse((o) => {
+      if (!(o as THREE.Mesh).isMesh) return;
+      const m = o as THREE.Mesh;
+      const prev = m.material;
+      const already = Array.isArray(prev) ? prev.every((mm) => mm === coreMat) : prev === coreMat;
+      if (already) return;
+      if (Array.isArray(prev)) {
+        prev.forEach((mm) => mm.dispose());
+        m.material = coreMat;
+      } else {
+        prev.dispose();
+        m.material = coreMat;
+      }
+    });
+  }, [nasaModel, coreMat]);
 
   useFrame((_, delta) => {
     const t = performance.now() * 0.001;
@@ -381,10 +426,20 @@ function makeSunCoreMaterial(colorHex: string, emissiveHex: string | undefined, 
       void main() {
         // Map sphere position to a pseudo-surface domain.
         vec3 n = normalize(vPos);
-        // Spherical UVs (equirectangular). Keeps the solar texture stable as the sphere rotates.
+        // Spherical UVs (equirectangular) + very soft “surface wave” warps for a living film.
         float u = atan(n.z, n.x) / (6.28318530718) + 0.5;
         float v = asin(clamp(n.y, -1.0, 1.0)) / 3.14159265359 + 0.5;
-        vec3 tex = texture2D(uMap, vec2(u, v)).rgb;
+        float t = uTime;
+        float w1 = 0.0075 * sin(10.0 * u + 4.0 * v - t * 0.35) + 0.0045 * sin(6.0 * u + t * 0.22);
+        float w2 = 0.0070 * sin(8.0 * v - 5.0 * u + t * 0.4)  + 0.0040 * sin(7.0 * v - t * 0.2);
+        vec2 uvW = vec2(
+          u + w1 * (0.4 + 0.6 * smoothstep(0.0, 0.35, abs(0.5 - v))),
+          v + w2
+        );
+        vec3 tex = texture2D(uMap, vec2(
+          mod(uvW.x, 1.0),
+          clamp(uvW.y, 0.001, 0.999)
+        )).rgb;
         // Convert to a luminance mask so we avoid \"sticker\" color shifts.
         float texLum = dot(tex, vec3(0.299, 0.587, 0.114));
         // The extracted NASA map (image0_lin.jpg) can read a bit flat
@@ -396,7 +451,6 @@ function makeSunCoreMaterial(colorHex: string, emissiveHex: string | undefined, 
         texLum = mix(texLum, texLum * texLum * (3.0 - 2.0 * texLum), 0.55); // smooth S-curve
 
         // Multi-scale fields: large flows + mid mottling + fine granulation.
-        float t = uTime;
         vec3 flowDomain = n * 2.3 + vec3(-t * 0.04, t * 0.03, -t * 0.035);
         float flows = fbm(flowDomain);
 

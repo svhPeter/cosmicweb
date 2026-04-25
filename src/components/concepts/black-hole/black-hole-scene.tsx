@@ -51,10 +51,10 @@ export function BlackHoleScene({ reducedMotion = false }: BlackHoleSceneProps = 
         toneMappingExposure: 1.12,
         outputColorSpace: THREE.SRGBColorSpace,
       }}
-      // Starting pose: slightly above the disk plane, back a respectful
-      // 18 units, so the disk reads immediately as a tilted ellipse and
-      // the Einstein ring is visible without the user having to orbit.
-      camera={{ position: [0, 3.2, 18], fov: 55, near: 0.05, far: 4000 }}
+      // Oblique default (not “head-on”): small azimuth + elevation so the
+      // disk, photon structure, and Doppler asymmetry read in depth — the same
+      // viewing pedagogy as serious GR visualisations.
+      camera={{ position: [2.6, 3.5, 16.5], fov: 55, near: 0.05, far: 4000 }}
       className="h-full w-full"
     >
       <AdaptiveDpr pixelated={false} />

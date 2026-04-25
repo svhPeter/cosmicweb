@@ -30,7 +30,9 @@ import {
 } from "@/lib/space/deep-sky-catalog";
 
 const PAD = 10;
-const BOTTOM_SHEET_ABOVE_CONTROLS = "calc(0.4rem + 5.5rem + env(safe-area-inset-bottom, 0px))";
+/** Room for TimeControlBar (wrap + two rows on narrow phones) + home indicator. */
+const BOTTOM_SHEET_ABOVE_CONTROLS =
+  "calc(0.75rem + 6.25rem + env(safe-area-inset-bottom, 0px))";
 
 type ExploreBody = (typeof bodies)[number];
 
@@ -177,7 +179,7 @@ export function SelectionPanel() {
           exit={{ opacity: 0, y: 12, scale: 0.99 }}
           transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           className={cn(
-            "pointer-events-auto fixed z-[100] flex min-h-0 flex-col",
+            "pointer-events-auto fixed z-[100] flex min-h-0 min-w-0 flex-col",
             // Desktop: premium floating inspector (never full-width).
             "sm:w-[min(26rem,calc(100vw-1.5rem))] sm:max-w-[26rem] sm:max-h-[70vh]",
             // Mobile: bottom sheet above controls.

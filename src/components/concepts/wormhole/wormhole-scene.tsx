@@ -42,7 +42,9 @@ export function WormholeScene({ reducedMotion = false }: WormholeSceneProps = {}
         toneMappingExposure: 1.12,
         outputColorSpace: THREE.SRGBColorSpace,
       }}
-      camera={{ position: [0, 1.4, 12], fov: 55, near: 0.05, far: 4000 }}
+      // Off-axis: throat and Einstein rim read as a sphere in space, not a
+      // flat “portal” facing the camera.
+      camera={{ position: [2.4, 1.2, 10.5], fov: 55, near: 0.05, far: 4000 }}
       className="h-full w-full"
     >
       <AdaptiveDpr pixelated={false} />

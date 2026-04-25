@@ -99,7 +99,7 @@ export function SolarSystemScene({
   return (
     <div className={`relative ${className}`}>
       <Canvas
-        className="relative z-0 !block h-full w-full touch-manipulation"
+        className="relative z-0 !block h-full w-full touch-none"
         shadows={false}
         dpr={dpr ?? (highPerf ? tierDpr : [1, Math.min(tierDpr[1], 1.3)])}
         gl={{

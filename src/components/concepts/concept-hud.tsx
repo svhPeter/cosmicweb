@@ -45,6 +45,11 @@ export interface ConceptHUDProps {
   blueprintLandmarks: readonly BlueprintLandmark[];
   blueprintTitle: string;
   blueprintUnitLabel: string;
+  /**
+   * Optional one-line note that the visualization is didactic, not a data
+   * product (EHT / GRMHD / etc.). Shown in the footer in muted type.
+   */
+  scienceCaption?: string;
 }
 
 export function ConceptHUD({
@@ -53,6 +58,7 @@ export function ConceptHUD({
   blueprintLandmarks,
   blueprintTitle,
   blueprintUnitLabel,
+  scienceCaption,
 }: ConceptHUDProps) {
   // Dismiss the drag/zoom hint after the user interacts with the scene
   // for the first time. We key off pointerdown so both touch and mouse
@@ -99,22 +105,54 @@ export function ConceptHUD({
         ) : null}
       </AnimatePresence>
 
-      <footer className="mt-auto flex items-end">
-        <AnimatePresence>
-          {!hintSeen ? (
-            <motion.p
-              key="orbit-hint"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 0.7, y: 0 }}
-              exit={{ opacity: 0, y: 6 }}
-              transition={{ duration: 0.35 }}
-              className="pointer-events-none max-w-[min(20rem,88vw)] text-center text-[10.5px] uppercase tracking-[0.2em] text-muted-foreground sm:max-w-none sm:text-left sm:text-[11px] sm:tracking-[0.22em]"
-            >
-              <span className="hidden sm:inline">Drag to orbit · Scroll to zoom</span>
-              <span className="sm:hidden">Drag to orbit · Pinch to zoom</span>
-            </motion.p>
-          ) : null}
-        </AnimatePresence>
+      <footer
+        className={[
+          "mt-auto flex items-end",
+          scienceCaption
+            ? "w-full flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-4"
+            : "",
+        ].join(" ")}
+      >
+        {scienceCaption ? (
+          <p className="pointer-events-none max-w-[min(28rem,92vw)] text-pretty text-[10px] leading-relaxed text-muted-foreground/85 sm:max-w-md sm:text-[10.5px]">
+            {scienceCaption}
+          </p>
+        ) : null}
+        {scienceCaption ? (
+          <div className="w-full sm:ml-auto sm:w-auto sm:shrink-0">
+            <AnimatePresence>
+              {!hintSeen ? (
+                <motion.p
+                  key="orbit-hint"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 0.7, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  transition={{ duration: 0.35 }}
+                  className="pointer-events-none w-full text-center text-[10.5px] uppercase tracking-[0.2em] text-muted-foreground sm:max-w-none sm:text-left sm:text-[11px] sm:tracking-[0.22em]"
+                >
+                  <span className="hidden sm:inline">Drag to orbit · Scroll to zoom</span>
+                  <span className="sm:hidden">Drag to orbit · Pinch to zoom</span>
+                </motion.p>
+              ) : null}
+            </AnimatePresence>
+          </div>
+        ) : (
+          <AnimatePresence>
+            {!hintSeen ? (
+              <motion.p
+                key="orbit-hint"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 0.7, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                transition={{ duration: 0.35 }}
+                className="pointer-events-none max-w-[min(20rem,88vw)] text-center text-[10.5px] uppercase tracking-[0.2em] text-muted-foreground sm:max-w-none sm:text-left sm:text-[11px] sm:tracking-[0.22em]"
+              >
+                <span className="hidden sm:inline">Drag to orbit · Scroll to zoom</span>
+                <span className="sm:hidden">Drag to orbit · Pinch to zoom</span>
+              </motion.p>
+            ) : null}
+          </AnimatePresence>
+        )}
       </footer>
     </div>
   );

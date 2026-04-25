@@ -71,7 +71,7 @@ export default function ConceptsPage() {
         <SectionHeading
           eyebrow="Concepts"
           title={<>The phenomena at the edges of physics.</>}
-          description="Beyond the planets, there are objects whose behaviour bends the rules we usually take for granted. This is a small, growing collection of them. Each one is a real-time simulation in your browser, grounded in the mathematics that describes it — not an artist's impression."
+          description="Beyond the planets, there are objects whose behaviour bends the rules we usually take for granted. This is a small, growing collection of them. Each one is a real-time simulation in your browser, grounded in the same equations professionals use — with one rule we never break: where something has been observed, we show the evidence, fully attributed; where we only have a consistent model, we say so. The standard is serious relativity pedagogy: right qualitative physics, honest about approximations, no fake data."
           as="h1"
         />
       </section>
@@ -105,11 +105,15 @@ export default function ConceptsPage() {
             <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground text-pretty">
               Each concept on this page links to a page with a real-time
               shader running in your browser. Rays are traced, deflections
-              are computed, and the image you see is produced from the
-              physics, not painted by hand. Where a phenomenon has been
-              photographed, the photograph is there, fully attributed.
-              Where it has not, the space for evidence is left empty on
-              purpose.
+              are computed, and the image you see is produced from a clearly
+              stated physical model, not hand-painted by an artist. That
+              model is often didactic: it encodes the geometry and the main
+              visual effects (Doppler, lensing, a thin photon ring) while
+              staying within what a browser can do in a frame. Where a
+              phenomenon has been photographed, the photograph is there, fully
+              attributed. Where it has not, the space for evidence is left
+              empty on purpose — or we point you to the primary literature
+              at the bottom of the page.
             </p>
           </div>
         </Card>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { WormholeExperience } from "@/components/concepts/wormhole/wormhole-experience";
+import { ConceptFurtherReading } from "@/components/concepts/concept-further-reading";
 import { RealImageGallery } from "@/components/concepts/real-image-gallery";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Card } from "@/components/ui/card";
@@ -178,11 +179,41 @@ export default function WormholePage() {
               star repeat around the rim, and why the centre of the
               throat looks like a window onto somewhere else.
             </p>
+            <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground text-pretty">
+              The deflection profile is a controlled choice for real-time
+              teaching: it fixes a specific lensing law so the programme can
+              run in your browser. It is not a claim that this exact
+              spacetime has been identified in nature. The point is the
+              qualitative behaviour — a spherical throat, a bright
+              lensed rim, and a second sky in the middle — that any
+              well-behaved traversable model must address.
+            </p>
           </div>
         </Card>
       </section>
+
+      <ConceptFurtherReading
+        title="Foundational papers"
+        intro="Traversable wormholes are an exact topic in general relativity. The hero shader is a stylised realisation; these are the works that set the problem up rigorously."
+        items={WORMHOLE_READING}
+      />
 
       <div className="section-y-tight" />
     </article>
   );
 }
+
+const WORMHOLE_READING = [
+  {
+    href: "https://doi.org/10.1103/PhysRevD.39.3518",
+    label: "Wormholes in spacetime and their use for interstellar travel",
+    source: "Morris & Thorne — Physical Review D, 1988",
+    note: "The standard traversable wormhole analysis: an explicit metric, tidal limits, and the exotic-matter question.",
+  },
+  {
+    href: "https://doi.org/10.1103/PhysRevD.47.533",
+    label: "Wormhole physics, elementary flat-space tech, and a chronology conjecture",
+    source: "Visser — Physical Review D, 1993",
+    note: "A survey that connects wormhole spacetimes to the practical constraints and chronology issues.",
+  },
+] as const;

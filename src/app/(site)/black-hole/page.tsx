@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { BlackHoleExperience } from "@/components/concepts/black-hole/black-hole-experience";
+import { ConceptFurtherReading } from "@/components/concepts/concept-further-reading";
 import { RealImageGallery } from "@/components/concepts/real-image-gallery";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Card } from "@/components/ui/card";
@@ -131,9 +132,24 @@ export default function BlackHolePage() {
               photon ring: light that looped the hole once or twice
               before reaching us.
             </p>
+            <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground text-pretty">
+              This is not a numerical GRMHD reconstruction of M87* or
+              Sgr A*, and it is not EHT data. It is a transparent
+              Schwarzschild-style didactic view: you should recognise the
+              same qualitative features as in the real images below (dark
+              silhouette, hot asymmetric disk, a thin photon structure), with
+              numbers and material physics left to the professional papers
+              in the further reading.
+            </p>
           </div>
         </Card>
       </section>
+
+      <ConceptFurtherReading
+        title="Peer-reviewed context"
+        intro="The interactive view above is a teaching model. The links below are how professionals publish black-hole imaging and the Event Horizon Telescope results."
+        items={BLACK_HOLE_READING}
+      />
 
       <div className="section-y-tight" />
     </article>
@@ -166,5 +182,26 @@ const EHT_IMAGES = [
     sourceHref: "https://www.eso.org/public/images/eso2208-eht-mwa/",
     width: 1280,
     height: 1280,
+  },
+] as const;
+
+const BLACK_HOLE_READING = [
+  {
+    href: "https://eventhorizontelescope.org/",
+    label: "Event Horizon Telescope",
+    source: "Collaboration home",
+    note: "The instrument and collaboration behind the M87* and Sgr A* images.",
+  },
+  {
+    href: "https://arxiv.org/abs/1906.11238",
+    label: "First M87* EHT results, Paper I: the shadow of the supermassive black hole",
+    source: "EHT Collaboration — arXiv:1906.11238",
+    note: "The published imaging analysis for M87. Compare the ring and asymmetry in the real data to the qualitative look of the shader above, not to a point-by-point render.",
+  },
+  {
+    href: "https://arxiv.org/abs/2311.08680",
+    label: "First Sgr A* EHT results, Paper I: the shadow in the centre of the Milky Way",
+    source: "EHT Collaboration — arXiv:2311.08680 (ApJL 2022)",
+    note: "The paper behind the 2022 Sgr A* image on this page: faster variability, thicker ring, different astrophysics than M87*.",
   },
 ] as const;

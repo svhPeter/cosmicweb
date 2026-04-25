@@ -29,28 +29,28 @@ const BLUEPRINT_LANDMARKS: readonly BlueprintLandmark[] = [
     id: "horizon",
     label: "Event horizon",
     multiple: 1,
-    note: "Schwarzschild radius r_s. No signal escapes from inside.",
+    note: "One-way boundary at r = r_s (Schwarzschild, non-spinning model). No signal from inside.",
     color: "horizon",
   },
   {
     id: "photon",
     label: "Photon sphere",
     multiple: 1.5,
-    note: "Light can orbit the hole once before escaping — the bright thin ring.",
+    note: "Unstable circular photon orbits in Schwarzschild spacetime sit at 1.5 r_s. The thin bright ring in this view is that idea in didactic form — not a GRMHD image.",
     color: "photon",
   },
   {
     id: "isco",
     label: "ISCO",
     multiple: 3,
-    note: "Inner-most stable circular orbit. Matter inside plunges in.",
+    note: "Innermost stable circular orbit for a test particle in Schwarzschild geometry. Interior gas cannot sit in stable circular orbits; it spirals in.",
     color: "isco",
   },
   {
     id: "disk-outer",
     label: "Disk outer edge",
     multiple: 13,
-    note: "Where the accretion disk's cool outer gas fades into the surrounding flow.",
+    note: "Outer radius of the modelled disk: hot inner flow fades to cooler, dimmer gas here. Compare to the EHT images below, qualitatively.",
     color: "disk",
   },
 ];
@@ -71,6 +71,7 @@ export function BlackHoleExperience() {
         blueprintLandmarks={BLUEPRINT_LANDMARKS}
         blueprintTitle="Schwarzschild cross-section"
         blueprintUnitLabel="r_s"
+        scienceCaption="Didactic Schwarzschild-style disk + ring: EHT-like look, not M87* / Sgr A* data or a GRMHD solve."
       />
     </>
   );

@@ -46,6 +46,10 @@ import { useDeviceTier } from "@/lib/use-device-tier";
  * metric is expensive; we approximate with a smooth radial remap that
  * matches the qualitative shape (sphere, rim, two skies). None of the
  * film's shots are used; the maths is public, the rendering is ours.
+ *
+ * The throat uses a very subtle “breath” so the page feels alive, but
+ * the geometry stays close to a fixed sphere — toy-like pulsing would
+ * break the sober observatory read.
  */
 
 export interface WormholeFieldProps {
@@ -84,7 +88,7 @@ export function WormholeField({
 
     // ~1% radial “breath” so the interface feels alive, not a static hero.
     const t = u.uTime!.value as number;
-    const breath = 1.0 + 0.012 * Math.sin(t * 0.32);
+    const breath = 1.0 + 0.006 * Math.sin(t * 0.32);
     u.uThroatR!.value = throatRadius * breath;
   });
 
@@ -449,13 +453,13 @@ function buildMaterial({ quality }: MaterialOptions): THREE.ShaderMaterial {
           float kG = (bAll - uThroatR)         * 7.5;
           float kB = (bAll - uThroatR * 0.988) * 7.5;
           vec3 prism = vec3(exp(-kR * kR), exp(-kG * kG), exp(-kB * kB));
-          col += vec3(1.00, 0.94, 0.82) * prism * 1.8 * pulse;
+          col += vec3(1.00, 0.94, 0.82) * prism * 2.05 * pulse;
         } else {
-          col += vec3(1.0, 0.94, 0.82) * ringMask * 1.8 * pulse;
+          col += vec3(1.0, 0.94, 0.82) * ringMask * 2.0 * pulse;
         }
         // Soft outer halo so the rim reads as a radiant band, not a line.
         float halo = exp(-pow((bAll - uThroatR) * 1.6, 2.0));
-        col += vec3(0.90, 0.70, 0.45) * halo * 0.30 * pulse;
+        col += vec3(0.90, 0.70, 0.45) * halo * 0.36 * pulse;
 
         // Stacked “shells” of glow — tier-gated. Reads as layered lensing
         // structure (inspired by elliptic, multi-mode Einstein rings) while

@@ -37,6 +37,14 @@ import { useDeviceTier } from "@/lib/use-device-tier";
  * The result: walk around the black hole, fly over, under, behind — the
  * lensing is correct from every pose, and the disk keeps its tilt.
  *
+ * # Pedagogy (Thorne / EHT spirit, not a data product)
+ *
+ * Real Event Horizon Telescope images come from radiative transfer on
+ * GRMHD — we do not claim that here. The look is tuned to the *same*
+ * teaching goals Kip Thorne’s team used for Interstellar: clear
+ * shadow, photon ring, Doppler-asymmetric disk, and honest weak-field
+ * lensing limits in the fragment shader.
+ *
  * # Performance
  *
  * One analytic deflection per pixel. No loops on low tier, one
@@ -348,8 +356,8 @@ function buildMaterial({ quality }: MaterialOptions): THREE.ShaderMaterial {
         // Real relativistic beaming scales like D^3..D^4. We push it
         // close to D^4 so one limb is cinema-bright and the other dim.
         float beamDot = dot(normalize(vec3(tangent.x, 0.0, tangent.y)), -rayDir);
-        float dopFactor = 1.0 + beamDot * vOrb * 1.6;
-        float doppler = pow(max(0.05, dopFactor), 3.6);
+        float dopFactor = 1.0 + beamDot * vOrb * 1.75;
+        float doppler = pow(max(0.05, dopFactor), 3.85);
 
         // ---- Radial "vortex" coordinates ----
         float theta = atan(hit.z, hit.x);
@@ -387,8 +395,13 @@ function buildMaterial({ quality }: MaterialOptions): THREE.ShaderMaterial {
                    * smoothstep(uDiskOuter * 0.6, uDiskInner * 1.4, r);
         float hotSpots = hot1 + hot2 * 0.8 + hot3 * 0.6;
 
+        // ISCO “inner edge” — extra emissivity just outside r_in (EHT-
+        // style: the ring’s brightness peaks near the last stable orbit).
+        float iscoEdge = exp(-pow((r - uDiskInner) / max(uDiskInner * 0.055, 1e-4), 2.0));
+
         // ---- Compose intensity ----
-        float intensity = arms * 0.55 + turb * 0.55 + streamers * 0.35 + hotSpots * 0.9;
+        float intensity =
+          arms * 0.55 + turb * 0.55 + streamers * 0.35 + hotSpots * 0.9 + iscoEdge * 0.55;
 
         // ---- Temperature-coloured base ----
         float tempT = clamp((r - uDiskInner) / (uDiskOuter - uDiskInner), 0.0, 1.0);
@@ -557,9 +570,9 @@ function buildMaterial({ quality }: MaterialOptions): THREE.ShaderMaterial {
         float ringWide = exp(-pow((bRs - 2.80) * 1.7, 2.0));
         float halo     = exp(-pow((bRs - 3.30) * 0.55, 2.0));
         float pulse = 0.94 + 0.06 * sin(uTime * 1.7);
-        col += vec3(1.00, 0.95, 0.80) * ringCore * 3.6  * pulse;
-        col += vec3(1.00, 0.82, 0.48) * ringWide * 1.10 * pulse;
-        col += vec3(0.98, 0.70, 0.40) * halo     * 0.55 * pulse;
+        col += vec3(1.00, 0.95, 0.80) * ringCore * 4.1  * pulse;
+        col += vec3(1.00, 0.82, 0.48) * ringWide * 1.28 * pulse;
+        col += vec3(0.98, 0.70, 0.40) * halo     * 0.58 * pulse;
 
         // ---- Approach cue: gravitational redshift tint ----
         float camR = length(uCameraPos) / max(uSchwarzschild, 0.001);

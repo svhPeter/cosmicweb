@@ -42,6 +42,12 @@ import { useDeviceTier } from "@/lib/use-device-tier";
  * legible to the human eye. That slowdown is noted on the page copy so
  * the product stays honest.
  *
+ * # Pedagogy (Thorne / NICER spirit)
+ *
+ * Pulsar hotspot *maps* (e.g. NICER on J0030) motivate two bright caps
+ * and swept beams, but this is a stylized educative view — not a fit
+ * to any one observation.
+ *
  * # Why this shader, not a mesh
  *
  * Beams and magnetosphere are volumetric — they don't have surfaces,
@@ -351,8 +357,8 @@ function buildMaterial({ quality }: MaterialOptions): THREE.ShaderMaterial {
         // Base blackbody — pushed blue because real neutron star
         // thermal emission peaks in the X-ray; in visible light it
         // reads as a fierce, almost UV white-blue.
-        vec3 basePhot = vec3(0.82, 0.92, 1.10);
-        float limb = pow(viewDot, 0.35);
+        vec3 basePhot = vec3(0.80, 0.94, 1.14);
+        float limb = pow(viewDot, 0.32);
         vec3 base = basePhot * limb;
 
         // Two polar caps — where |n · mAxis| ≈ 1. A sharp exponential
@@ -362,7 +368,7 @@ function buildMaterial({ quality }: MaterialOptions): THREE.ShaderMaterial {
         float capAlign = abs(dot(n, mAxis));
         float capMask = smoothstep(0.86, 0.995, capAlign);
         vec3 capCol = vec3(1.10, 0.95, 0.78); // hotter, slightly X-ray-peaked
-        vec3 caps = capCol * capMask * viewDot * 6.0;
+        vec3 caps = capCol * capMask * viewDot * 6.8;
 
         // Latitude bands & tiny-scale surface roughness, painted in
         // the rotating star frame so they advect with rotation.
@@ -469,7 +475,7 @@ function buildMaterial({ quality }: MaterialOptions): THREE.ShaderMaterial {
           t += dt;
         }
 
-        return accum * dt * 0.18;
+        return accum * dt * 0.2;
       }
 
       // =========================================================
@@ -491,7 +497,7 @@ function buildMaterial({ quality }: MaterialOptions): THREE.ShaderMaterial {
         vec3 result = vec3(0.0);
         float rStar = uStarR;
 
-        float beamOpen = 0.28;   // lateral half-width in scene units
+        float beamOpen = 0.26;   // lateral half-width in scene units
         float beamReach = rStar * 11.0;
 
         for (int side = 0; side < 2; side++) {
@@ -545,7 +551,7 @@ function buildMaterial({ quality }: MaterialOptions): THREE.ShaderMaterial {
 
           // Cool-white beam, pushed bright enough to bloom hard.
           vec3 beamCol = vec3(0.80, 0.94, 1.20);
-          result += beamCol * accum * dt * 0.85;
+          result += beamCol * accum * dt * 0.95;
         }
 
         return result;

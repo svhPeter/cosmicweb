@@ -30,28 +30,28 @@ const BLUEPRINT_LANDMARKS: readonly BlueprintLandmark[] = [
     id: "surface",
     label: "Surface",
     multiple: 1,
-    note: "The crust. A 20 km ball of degenerate nuclear matter — the densest object light still escapes.",
+    note: "A solid crust — light reflects and thermally re-emits. Nothing like a black hole horizon: you could in principle stand on it (if you survived the field).",
     color: "surface",
   },
   {
     id: "magnetosphere",
     label: "Closed magnetosphere",
     multiple: 5,
-    note: "Dipole field lines loop back to the star here. Charged plasma is trapped, co-rotating with the crust.",
+    note: "Inside this radius, dipole field lines close on the star; corotating plasma is magnetically tied to the crust in the closed zone.",
     color: "magnetosphere",
   },
   {
     id: "beams",
     label: "Polar beam reach",
     multiple: 11,
-    note: "Radiation cones emerge from the magnetic poles. Tilted from the rotation axis, they sweep space as the star spins.",
+    note: "Open field lines from the magnetic poles: radiation in narrow cones, tilted from the spin axis. Real ms pulsars: here slowed to ~8 s per turn for clarity.",
     color: "beam",
   },
   {
     id: "lightcyl",
     label: "Light cylinder",
     multiple: 15,
-    note: "Beyond this radius, co-rotating field lines would need to move faster than light, so they open up and carry plasma outward.",
+    note: "Corotation at c: beyond this cylinder, field lines that stayed closed would have to move faster than light, so the magnetosphere opens into a wind.",
     color: "lightcyl",
   },
 ];
@@ -72,6 +72,7 @@ export function NeutronStarExperience() {
         blueprintLandmarks={BLUEPRINT_LANDMARKS}
         blueprintTitle="Pulsar cross-section"
         blueprintUnitLabel="r*"
+        scienceCaption="Rotating dipole + hotspots: NICER-style motivation, not a fit to one star; period slowed for the screen."
       />
     </>
   );

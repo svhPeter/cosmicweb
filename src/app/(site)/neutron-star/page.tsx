@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { NeutronStarExperience } from "@/components/concepts/neutron-star/neutron-star-experience";
+import { ConceptFurtherReading } from "@/components/concepts/concept-further-reading";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Card } from "@/components/ui/card";
 import { site } from "@/lib/site";
@@ -228,13 +229,43 @@ export default function NeutronStarPage() {
               every eight seconds. Everything else — the geometry,
               the tilt, the beam shape, the magnetosphere topology —
               is as the mathematics of a rotating magnetic dipole
-              describes it.
+              describes it. The two bright caps are motivated by
+              X-ray pulsar science (e.g. hotspot mapping); they are not
+              a numerical fit to any one NICER data set in this
+              build.
             </p>
           </div>
         </Card>
       </section>
 
+      <ConceptFurtherReading
+        title="Observational and mission context"
+        intro="Pulsars are timed and imaged in X-rays, not as vacation snapshots. The simulation above is a rotating-dipole teaching view; the links below are where the measurements live."
+        items={NEUTRON_STAR_READING}
+      />
+
       <div className="section-y-tight" />
     </article>
   );
 }
+
+const NEUTRON_STAR_READING = [
+  {
+    href: "https://heasarc.gsfc.nasa.gov/docs/nicer/",
+    label: "NASA NICER (Neutron star Interior Composition Explorer)",
+    source: "ISS payload",
+    note: "X-ray timing and thermal mapping — the observational line of work that motivates hotspot structure on the crust.",
+  },
+  {
+    href: "https://www.ligo.caltech.edu/",
+    label: "LIGO / gravitational-wave science",
+    source: "LIGO Laboratory",
+    note: "Binary neutron stars, GW170817, and the 2017 multi-messenger era — the landscape our timeline section summarises.",
+  },
+  {
+    href: "https://astronomy.swin.edu.au/cosmos/p/pulsar",
+    label: "Pulsar (Cosmos — Swinburne Astronomy online textbook)",
+    source: "Expository article",
+    note: "A stable reference on what pulsars are and how we discover them, complementing the NICER / X-ray line of the fourth timeline card on this page.",
+  },
+] as const;

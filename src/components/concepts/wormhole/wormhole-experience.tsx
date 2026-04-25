@@ -27,28 +27,28 @@ const BLUEPRINT_LANDMARKS: readonly BlueprintLandmark[] = [
     id: "throat",
     label: "Throat",
     multiple: 1,
-    note: "Radius of the Ellis-metric sphere. Enter here, arrive on the other side.",
+    note: "Unit sphere at the mouth of the modelled bridge (Ellis / embedding-style profile in the shader). Pure GR exercise — not an observed object.",
     color: "horizon",
   },
   {
     id: "rim",
     label: "Einstein rim",
     multiple: 1.3,
-    note: "Stars from behind the throat pile up here, forming the bright ring.",
+    note: "Background starlight is strongly lensed on the sky around the projected throat, piling up in a bright ring.",
     color: "rim",
   },
   {
     id: "lens-shell",
     label: "Lensing shell",
     multiple: 2.4,
-    note: "Outer envelope where spacetime curvature still visibly bends starlight.",
+    note: "Radius where deflection in this model is still large enough to curve field stars clearly.",
     color: "photon",
   },
   {
     id: "sky-far",
     label: "Far sky",
     multiple: 4,
-    note: "Visible through the throat — a different place, not a reflection.",
+    note: "Rays that pass through the throat sample a second sky (the “other end” in this toy metric), not a mirror of the local star field.",
     color: "sky",
   },
 ];
@@ -69,6 +69,7 @@ export function WormholeExperience() {
         blueprintLandmarks={BLUEPRINT_LANDMARKS}
         blueprintTitle="Ellis-metric cross-section"
         blueprintUnitLabel="r_throat"
+        scienceCaption="Traversable-style geometry for GR pedagogy: exact observations of such a spacetime do not exist."
       />
     </>
   );

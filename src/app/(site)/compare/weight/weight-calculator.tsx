@@ -97,7 +97,7 @@ export function WeightCalculator() {
       <div className="grid gap-px rounded-2xl border border-border bg-border/70 sm:grid-cols-2 lg:grid-cols-3 overflow-hidden">
         {rows.map((row) => (
           <div key={row.id} className="bg-panel/80 p-5 flex items-center gap-4">
-            <PlanetVisual colorHex={row.colorHex} ringed={row.ringed} size="sm" />
+            <PlanetVisual bodyId={row.id} colorHex={row.colorHex} ringed={row.ringed} size="sm" />
             <div className="flex-1">
               <p className="text-sm font-medium">{row.name}</p>
               <p className="text-[11px] text-muted-foreground">

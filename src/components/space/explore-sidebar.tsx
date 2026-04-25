@@ -134,7 +134,7 @@ function BodyRow({
           : "text-foreground/85 hover:bg-white/6"
       )}
     >
-      <PlanetVisual colorHex={body.render.colorHex} ringed={body.render.ringed} size="sm" />
+      <PlanetVisual bodyId={body.id} colorHex={body.render.colorHex} ringed={body.render.ringed} size="sm" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium leading-tight">{body.name}</p>
         <p className="mt-0.5 truncate text-[10px] leading-tight text-muted-foreground sm:text-[11px]">

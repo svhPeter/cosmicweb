@@ -34,7 +34,7 @@ export default function GravityComparePage() {
               className="grid grid-cols-[140px_1fr] items-center gap-4 border-b border-border/70 py-4 sm:grid-cols-[180px_1fr_140px]"
             >
               <div className="flex items-center gap-3">
-                <PlanetVisual colorHex={p.render.colorHex} ringed={p.render.ringed} size="sm" />
+                <PlanetVisual bodyId={p.id} colorHex={p.render.colorHex} ringed={p.render.ringed} size="sm" />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{p.name}</p>
                   <p className="text-[11px] text-muted-foreground">

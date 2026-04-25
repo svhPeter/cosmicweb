@@ -32,11 +32,16 @@ const config: Config = {
           foreground: "hsl(var(--muted-foreground))",
         },
         border: "hsl(var(--border))",
+        "border-strong": "hsl(var(--border-strong))",
         panel: "hsl(var(--panel))",
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
           soft: "hsl(var(--accent-soft))",
+        },
+        "accent-2": {
+          DEFAULT: "hsl(var(--accent-2))",
+          soft: "hsl(var(--accent-2-soft))",
         },
         danger: "hsl(var(--danger))",
         success: "hsl(var(--success))",

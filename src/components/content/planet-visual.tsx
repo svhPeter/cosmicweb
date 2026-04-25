@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
  * components can swap implementation without changing the call sites.
  */
 interface PlanetVisualProps {
+  /** Optional body id to pick a realistic texture (preferred for cards). */
+  bodyId?: string;
   colorHex: string;
   ringed?: boolean;
   className?: string;
@@ -23,12 +25,16 @@ const sizeMap: Record<NonNullable<PlanetVisualProps["size"]>, string> = {
 };
 
 export function PlanetVisual({
+  bodyId,
   colorHex,
   ringed,
   className,
   size = "md",
   glow = false,
 }: PlanetVisualProps) {
+  const texture = bodyId ? textureForBody(bodyId) : null;
+  const showClouds = bodyId === "earth" && (size === "md" || size === "lg" || size === "xl");
+
   return (
     <div
       aria-hidden
@@ -40,18 +46,59 @@ export function PlanetVisual({
           style={{ backgroundColor: colorHex }}
         />
       ) : null}
-      <span
-        className="relative block h-full w-full rounded-full"
-        style={{
-          background: `radial-gradient(circle at 32% 30%, rgba(255,255,255,0.55), rgba(255,255,255,0) 32%),
-                       radial-gradient(circle at 26% 26%, ${shade(colorHex, 8)} 0%, ${colorHex} 34%, ${shade(
-                         colorHex,
-                         -30
-                       )} 78%, #05070d 100%),
-                       radial-gradient(circle at 78% 78%, rgba(0,0,0,0.35), rgba(0,0,0,0) 48%)`,
-          boxShadow: `inset -10% -14% 30% rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.06)`,
-        }}
-      />
+      <span className="relative block h-full w-full rounded-full overflow-hidden">
+        {/* Textured base (lightweight image). */}
+        {texture ? (
+          <span
+            className="absolute inset-0 rounded-full"
+            style={{
+              backgroundImage: `url(${texture})`,
+              backgroundSize: "cover",
+              backgroundPosition: bodyId === "jupiter" ? "60% 48%" : "50% 50%",
+              filter: "saturate(1.05) contrast(1.06)",
+              transform: "scale(1.02)",
+            }}
+          />
+        ) : (
+          <span
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: `radial-gradient(circle at 32% 30%, rgba(255,255,255,0.55), rgba(255,255,255,0) 32%),
+                           radial-gradient(circle at 26% 26%, ${shade(colorHex, 8)} 0%, ${colorHex} 34%, ${shade(
+                             colorHex,
+                             -30
+                           )} 78%, #05070d 100%),
+                           radial-gradient(circle at 78% 78%, rgba(0,0,0,0.35), rgba(0,0,0,0) 48%)`,
+            }}
+          />
+        )}
+
+        {/* Optional cloud layer (Earth). */}
+        {showClouds ? (
+          <span
+            className="absolute inset-0 rounded-full opacity-45 mix-blend-screen"
+            style={{
+              backgroundImage: "url(/textures/earth/earth_clouds_1024.png)",
+              backgroundSize: "cover",
+              backgroundPosition: "48% 52%",
+              filter: "contrast(1.15) brightness(1.05)",
+              transform: "scale(1.03)",
+            }}
+          />
+        ) : null}
+
+        {/* Lighting: highlight + terminator + subtle rim. */}
+        <span
+          className="absolute inset-0 rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle at 32% 30%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 42%)," +
+              "radial-gradient(circle at 78% 78%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 54%)," +
+              "radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 62%, rgba(0,0,0,0.35) 100%)",
+            boxShadow: "inset -18% -22% 40% rgba(0,0,0,0.65), inset 0 0 0 1px rgba(255,255,255,0.06)",
+          }}
+        />
+      </span>
       {ringed ? (
         <span
           className="pointer-events-none absolute left-1/2 top-1/2"
@@ -67,6 +114,33 @@ export function PlanetVisual({
       ) : null}
     </div>
   );
+}
+
+function textureForBody(bodyId: string): string | null {
+  switch (bodyId) {
+    case "mercury":
+      return "/textures/mercury/mercury_albedo.png";
+    case "venus":
+      return "/textures/venus/venus_clouds.jpg";
+    case "earth":
+      return "/textures/earth/earth_day_2048.jpg";
+    case "moon":
+      return "/textures/moon/lroc_color_2k.jpg";
+    case "mars":
+      return "/textures/mars/mars_albedo.jpg";
+    case "jupiter":
+      return "/textures/jupiter/jupiter_albedo.jpg";
+    case "saturn":
+      return "/textures/saturn/saturn_albedo.jpg";
+    case "uranus":
+      return "/textures/uranus/uranus_albedo.jpg";
+    case "neptune":
+      return "/textures/neptune/neptune_albedo.jpg";
+    case "pluto":
+      return "/textures/pluto/pluto_albedo.jpg";
+    default:
+      return null;
+  }
 }
 
 function clamp(n: number, min: number, max: number) {

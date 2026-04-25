@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ASTRAEUS - UNVEILING THE COSMOS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Noto+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-fixed-dim": "#c1c7cf",
+                      "primary": "#b8c3ff",
+                      "surface-bright": "#373943",
+                      "on-surface-variant": "#c4c5d9",
+                      "on-primary": "#002388",
+                      "on-primary-container": "#efefff",
+                      "background": "#11131c",
+                      "on-primary-fixed": "#001356",
+                      "surface-tint": "#b8c3ff",
+                      "surface-container-lowest": "#0c0e17",
+                      "on-tertiary": "#003731",
+                      "on-error-container": "#ffdad6",
+                      "surface": "#11131c",
+                      "on-tertiary-fixed-variant": "#005048",
+                      "surface-container-low": "#191b24",
+                      "surface-container-highest": "#33343e",
+                      "tertiary-container": "#007b6e",
+                      "error-container": "#93000a",
+                      "on-tertiary-container": "#b1fff1",
+                      "primary-container": "#2e5bff",
+                      "on-error": "#690005",
+                      "surface-container": "#1d1f29",
+                      "error": "#ffb4ab",
+                      "on-surface": "#e2e1ef",
+                      "on-secondary-fixed-variant": "#41474e",
+                      "tertiary": "#4fdbc8",
+                      "on-secondary": "#2b3137",
+                      "on-primary-fixed-variant": "#0035be",
+                      "inverse-surface": "#e2e1ef",
+                      "inverse-primary": "#124af0",
+                      "primary-fixed": "#dde1ff",
+                      "tertiary-fixed-dim": "#4fdbc8",
+                      "outline-variant": "#434656",
+                      "primary-fixed-dim": "#b8c3ff",
+                      "on-secondary-container": "#afb6bd",
+                      "surface-variant": "#33343e",
+                      "tertiary-fixed": "#71f8e4",
+                      "surface-dim": "#11131c",
+                      "outline": "#8e90a2",
+                      "secondary-container": "#41474e",
+                      "inverse-on-surface": "#2e303a",
+                      "on-secondary-fixed": "#161c22",
+                      "on-tertiary-fixed": "#00201c",
+                      "on-background": "#e2e1ef",
+                      "surface-container-high": "#282933",
+                      "secondary": "#c1c7cf",
+                      "secondary-fixed": "#dde3eb"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin": "48px",
+                      "grid-unit": "8px",
+                      "hud-padding": "12px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
+                      "display-xl": [
+                              "Noto Serif"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Space Grotesk"
+                      ],
+                      "data-mono": [
+                              "Space Grotesk"
+                      ],
+                      "narrative-h1": [
+                              "Noto Serif"
+                      ]
+              },
+              "fontSize": {
+                      "display-xl": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.15em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-mono": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "narrative-h1": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .hud-grid-overlay {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        }
+        .hud-card {
+            background: rgba(17, 19, 28, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+        .hud-card::before {
+            content: '';
+            position: absolute;
+            top: -1px; left: -1px;
+            width: 8px; height: 8px;
+            border-top: 1px solid theme('colors.primary');
+            border-left: 1px solid theme('colors.primary');
+        }
+        .hud-card::after {
+            content: '';
+            position: absolute;
+            bottom: -1px; right: -1px;
+            width: 8px; height: 8px;
+            border-bottom: 1px solid theme('colors.primary');
+            border-right: 1px solid theme('colors.primary');
+        }
+      </style>
+</head>
+<body class="bg-background text-on-background min-h-screen relative hud-grid-overlay font-body-md text-body-md overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="bg-neutral-950/40 backdrop-blur-xl fixed top-0 w-full z-50 border-b border-white/10 shadow-[0_0_20px_rgba(46,91,255,0.15)] hidden md:flex items-center justify-between px-12 h-20">
+<div class="text-2xl font-black text-blue-500 tracking-tighter">ASTRAEUS</div>
+<nav class="flex gap-8 font-serif text-xs tracking-[0.2em] uppercase">
+<a class="text-blue-400 border-b-2 border-blue-500 pb-1 hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 active:scale-95 transition-transform duration-150" href="#">Home</a>
+<a class="text-white/60 hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 active:scale-95 transition-transform duration-150" href="#">Explore</a>
+<a class="text-white/60 hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 active:scale-95 transition-transform duration-150" href="#">Today</a>
+<a class="text-white/60 hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 active:scale-95 transition-transform duration-150" href="#">About</a>
+</nav>
+<div class="flex gap-6 text-blue-600 dark:text-blue-500">
+<button class="hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 active:scale-95 transition-transform duration-150"><span class="material-symbols-outlined">account_circle</span></button>
+<button class="hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 active:scale-95 transition-transform duration-150"><span class="material-symbols-outlined">settings</span></button>
+</div>
+</header>
+<main class="pt-20">
+<!-- Hero Section -->
+<section class="relative min-h-[921px] flex items-center justify-center px-margin pt-20 pb-20">
+<div class="absolute inset-0 z-0 opacity-40">
+<img class="w-full h-full object-cover object-center filter contrast-125 brightness-75 mix-blend-screen" data-alt="Cinematic 3D render of a luminous exoplanet with faint glowing atmospheric rings, set against a deep black cosmic void with subtle starlight, high-fidelity scientific blueprint aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCydUwhVhAuORj87TB4y2JsYoJQHQSFNsCH1Brxf6UptASzoVKxH1fu8L-WAyGZHajEVgTPJoJu5GZGCxYS85dh98Cd5Jg2AripWOOVtZrZy1dTLTatqeOZqmd6UNlOwMm-KWtu2iyZ-cKIIgFvxlCvV6-rt_21pxD7GIgCG5JLFvxpyB39bV-yQGdsx04BYSn023qIbhdJIN-WlIdKr2yNTKVSGkDiCqfQsFxyAk4EjwLJhHaPAz6Zc6Vj4RwEFJFlulI-cttmZcL4"/>
+<div class="absolute inset-0 bg-gradient-to-b from-background/80 via-background/20 to-background"></div>
+</div>
+<div class="relative z-10 w-full max-w-7xl mx-auto flex flex-col items-center text-center">
+<div class="mb-8 border border-white/10 px-4 py-2 bg-surface-container/50 backdrop-blur-md rounded">
+<span class="font-label-caps text-label-caps text-tertiary">SYSTEM STATUS: ONLINE // ASTRAEUS HQ</span>
+</div>
+<h1 class="font-display-xl text-display-xl text-on-primary-container mb-6 max-w-4xl tracking-tight">
+                    UNVEILING THE <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-tertiary">COSMOS</span>
+</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mb-12">
+                    A high-fidelity research instrument for data-heavy astronomical environments. Explore the universe with unprecedented scientific accuracy and immersive theoretical modeling.
+                </p>
+<div class="flex gap-6">
+<button class="px-8 py-3 bg-transparent border border-primary text-primary font-label-caps text-label-caps hover:bg-primary/10 hover:shadow-[0_0_15px_rgba(184,195,255,0.3)] transition-all duration-300 uppercase">
+                        Initialize Uplink
+                    </button>
+<button class="px-8 py-3 bg-transparent border border-white/20 text-on-surface font-label-caps text-label-caps hover:border-white/50 transition-all duration-300 uppercase flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">database</span> Data Archives
+                    </button>
+</div>
+</div>
+</section>
+<!-- Features Bento Grid -->
+<section class="px-margin py-20 relative z-10">
+<div class="max-w-7xl mx-auto">
+<div class="mb-12 flex items-center justify-between border-b border-white/10 pb-4">
+<h2 class="font-narrative-h1 text-narrative-h1 text-on-surface">CORE MODULES</h2>
+<span class="font-data-mono text-data-mono text-on-surface-variant">SEC-01 // DIAGNOSTICS</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Card 1 -->
+<div class="hud-card p-hud-padding flex flex-col group hover:border-primary/50 transition-colors duration-500">
+<div class="flex justify-between items-start mb-16">
+<span class="font-label-caps text-label-caps text-tertiary px-2 py-1 bg-tertiary/10 border border-tertiary/20">MOD-A</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">explore</span>
+</div>
+<div class="mt-auto">
+<h3 class="font-narrative-h1 text-narrative-h1 text-on-primary-container mb-2 text-2xl">Live Explorer</h3>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">Real-time telemetry and visualization of near-earth objects and planetary bodies.</p>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="hud-card p-hud-padding flex flex-col group hover:border-primary/50 transition-colors duration-500 md:col-span-2">
+<div class="flex justify-between items-start mb-16">
+<span class="font-label-caps text-label-caps text-tertiary px-2 py-1 bg-tertiary/10 border border-tertiary/20">MOD-B</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">science</span>
+</div>
+<div class="mt-auto flex justify-between items-end">
+<div class="max-w-md">
+<h3 class="font-narrative-h1 text-narrative-h1 text-on-primary-container mb-2 text-2xl">Scientific Rigor</h3>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">Data sourced directly from orbital observatories. High-fidelity spectral analysis and gravitational modeling.</p>
+</div>
+<div class="text-right hidden sm:block">
+<div class="font-data-mono text-data-mono text-primary text-2xl">99.9%</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">ACCURACY INDEX</div>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="hud-card p-hud-padding flex flex-col group hover:border-primary/50 transition-colors duration-500 md:col-span-3 min-h-[300px] relative overflow-hidden">
+<div class="absolute right-0 top-0 w-1/2 h-full opacity-20 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&amp;w=2672&amp;auto=format&amp;fit=crop')] bg-cover bg-center mix-blend-screen" data-alt="Abstract network of glowing blue lines representing complex deep physics gravitational models against black void"></div>
+<div class="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent"></div>
+<div class="relative z-10 flex flex-col h-full">
+<div class="flex justify-between items-start mb-16 max-w-xl">
+<span class="font-label-caps text-label-caps text-tertiary px-2 py-1 bg-tertiary/10 border border-tertiary/20">MOD-C</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">model_training</span>
+</div>
+<div class="mt-auto max-w-xl">
+<h3 class="font-narrative-h1 text-narrative-h1 text-on-primary-container mb-4 text-3xl">Deep Physics Concepts</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">Interactive simulations of theoretical astrophysics. Visualize dark matter distribution, black hole event horizons, and quantum fluctuations.</p>
+<button class="text-primary font-label-caps text-label-caps flex items-center gap-2 hover:text-tertiary transition-colors">
+                                    INITIATE SEQUENCE <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-neutral-950 w-full py-12 border-t border-white/5 border-t border-white/10 flex flex-col items-center justify-center gap-6 z-10 relative">
+<div class="text-blue-500 font-bold font-serif text-[9px] tracking-[0.3em] uppercase">ASTRAEUS</div>
+<div class="flex gap-6 font-serif text-[9px] tracking-[0.3em] uppercase">
+<a class="text-white/30 hover:text-blue-400 transition-colors cursor-pointer" href="#">Data Sources</a>
+<a class="text-white/30 hover:text-blue-400 transition-colors cursor-pointer" href="#">Privacy Protocol</a>
+<a class="text-white/30 hover:text-blue-400 transition-colors cursor-pointer" href="#">Contact Station</a>
+</div>
+<div class="text-white/30 font-serif text-[9px] tracking-[0.3em] uppercase mt-4">
+            © 2024 ASTRAEUS INTERACTIVE. SCIENTIFIC BLUEPRINT MODEL.
+        </div>
+</footer>
+</body></html>

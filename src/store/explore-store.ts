@@ -22,6 +22,15 @@ interface ExploreState {
   /** Body id being hovered (for tooltip / highlight). */
   hoveredBodyId: string | null;
 
+  /**
+   * Non-body inspectables (deep-sky anchors, concept entry objects, etc.).
+   * These are *not* camera-focused by default — they may be extremely far.
+   * Focus here is a UI notion used for hide/restore affordances.
+   */
+  focusedSceneObjectId: string | null;
+  selectedSceneObjectId: string | null;
+  hoveredSceneObjectId: string | null;
+
   /** Playback controls. */
   playing: boolean;
   speed: number;
@@ -58,6 +67,9 @@ interface ExploreState {
   setFocused: (id: string | null) => void;
   setSelected: (id: string | null) => void;
   setHovered: (id: string | null) => void;
+  setFocusedSceneObject: (id: string | null) => void;
+  setSelectedSceneObject: (id: string | null) => void;
+  setHoveredSceneObject: (id: string | null) => void;
   togglePlaying: () => void;
   setPlaying: (v: boolean) => void;
   setSpeed: (v: number) => void;
@@ -81,6 +93,9 @@ export const useExploreStore = create<ExploreState>((set) => ({
   focusedBodyId: null,
   selectedBodyId: null,
   hoveredBodyId: null,
+  focusedSceneObjectId: null,
+  selectedSceneObjectId: null,
+  hoveredSceneObjectId: null,
   playing: true,
   speed: 1,
   scaleMode: "visual",
@@ -102,6 +117,20 @@ export const useExploreStore = create<ExploreState>((set) => ({
       ...(id != null ? { focusedBodyId: id } : {}),
     }),
   setHovered: (id) => set({ hoveredBodyId: id }),
+
+  setFocusedSceneObject: (id) => set({ focusedSceneObjectId: id }),
+  /**
+   * Selecting a scene object opens the inspection panel, but does not
+   * drive the camera — deep-sky anchors are intentionally "inspect in place".
+   * Clearing selection hides the panel only; focus is unchanged so the
+   * "Details" restore affordance can bring it back.
+   */
+  setSelectedSceneObject: (id) =>
+    set({
+      selectedSceneObjectId: id,
+      ...(id != null ? { focusedSceneObjectId: id } : {}),
+    }),
+  setHoveredSceneObject: (id) => set({ hoveredSceneObjectId: id }),
   togglePlaying: () => set((s) => ({ playing: !s.playing })),
   setPlaying: (v) => set({ playing: v }),
   setSpeed: (v) => set({ speed: Math.max(0, Math.min(8, v)) }),
@@ -115,6 +144,9 @@ export const useExploreStore = create<ExploreState>((set) => ({
       focusedBodyId: null,
       selectedBodyId: null,
       hoveredBodyId: null,
+      focusedSceneObjectId: null,
+      selectedSceneObjectId: null,
+      hoveredSceneObjectId: null,
       playing: true,
       speed: 1,
       simulationJd: jdNow(),

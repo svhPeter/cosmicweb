@@ -1,16 +1,38 @@
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-export const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
+const cardVariants = cva(
+  "overflow-hidden transition-colors",
+  {
+    variants: {
+      variant: {
+        /** Default editorial card (existing look). */
+        default: "cosmos-panel shadow-panel hover:border-foreground/15",
+        /** Premium glass surface (HUD-ready). */
+        glass: "cosmos-glass shadow-panel hover:border-foreground/15",
+        /** Denser instrument HUD card. */
+        hud: "cosmos-hud-card shadow-panel hover:border-foreground/15",
+        /** Compact instrument panel: tighter radius/padding handled by children. */
+        instrument: "cosmos-hud-card hover:border-foreground/15",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
+
+export interface CardProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof cardVariants> {}
+
+export const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn(
-        "cosmos-panel shadow-panel overflow-hidden",
-        "transition-colors hover:border-foreground/15",
-        className
-      )}
+      className={cn(cardVariants({ variant }), className)}
       {...props}
     />
   )

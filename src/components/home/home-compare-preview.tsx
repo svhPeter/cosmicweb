@@ -35,6 +35,7 @@ export function HomeComparePreview() {
           {picks.map((p) => (
             <div key={p.id} className="flex flex-col items-center gap-2 text-center">
               <PlanetVisual
+                bodyId={p.id}
                 colorHex={p.render.colorHex}
                 ringed={p.render.ringed}
                 size="md"

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CosmicWeb - Concepts Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&amp;family=Noto+Serif:ital,wght@0,500;0,600;1,500&amp;family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#0c0e17",
+                      "on-primary-container": "#efefff",
+                      "inverse-primary": "#124af0",
+                      "outline-variant": "#434656",
+                      "inverse-surface": "#e2e1ef",
+                      "tertiary-container": "#007b6e",
+                      "outline": "#8e90a2",
+                      "on-secondary": "#2b3137",
+                      "primary-container": "#2e5bff",
+                      "error": "#ffb4ab",
+                      "surface": "#11131c",
+                      "on-primary": "#002388",
+                      "surface-variant": "#33343e",
+                      "surface-dim": "#11131c",
+                      "secondary-fixed-dim": "#c1c7cf",
+                      "tertiary": "#4fdbc8",
+                      "secondary-fixed": "#dde3eb",
+                      "on-secondary-fixed-variant": "#41474e",
+                      "secondary-container": "#41474e",
+                      "on-tertiary-fixed-variant": "#005048",
+                      "on-error-container": "#ffdad6",
+                      "error-container": "#93000a",
+                      "on-tertiary-container": "#b1fff1",
+                      "on-primary-fixed-variant": "#0035be",
+                      "on-tertiary": "#003731",
+                      "surface-tint": "#b8c3ff",
+                      "surface-container-low": "#191b24",
+                      "secondary": "#c1c7cf",
+                      "background": "#11131c",
+                      "on-surface": "#e2e1ef",
+                      "tertiary-fixed": "#71f8e4",
+                      "surface-container-highest": "#33343e",
+                      "on-secondary-fixed": "#161c22",
+                      "on-error": "#690005",
+                      "surface-container": "#1d1f29",
+                      "on-primary-fixed": "#001356",
+                      "on-secondary-container": "#afb6bd",
+                      "on-tertiary-fixed": "#00201c",
+                      "inverse-on-surface": "#2e303a",
+                      "tertiary-fixed-dim": "#4fdbc8",
+                      "primary-fixed-dim": "#b8c3ff",
+                      "surface-bright": "#373943",
+                      "on-surface-variant": "#c4c5d9",
+                      "primary-fixed": "#dde1ff",
+                      "primary": "#b8c3ff",
+                      "surface-container-high": "#282933",
+                      "on-background": "#e2e1ef"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "margin": "48px",
+                      "hud-padding": "12px",
+                      "grid-unit": "8px"
+              },
+              "fontFamily": {
+                      "narrative-h1": [
+                              "notoSerif"
+                      ],
+                      "label-caps": [
+                              "spaceGrotesk"
+                      ],
+                      "data-mono": [
+                              "spaceGrotesk"
+                      ],
+                      "display-xl": [
+                              "notoSerif"
+                      ],
+                      "body-md": [
+                              "inter"
+                      ]
+              },
+              "fontSize": {
+                      "narrative-h1": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.15em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-mono": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-xl": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(25, 27, 36, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .grid-bg {
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+        .bracket-corner {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        .bracket-tl { top: 0; left: 0; border-top-width: 1px; border-left-width: 1px; }
+        .bracket-tr { top: 0; right: 0; border-top-width: 1px; border-right-width: 1px; }
+        .bracket-bl { bottom: 0; left: 0; border-bottom-width: 1px; border-left-width: 1px; }
+        .bracket-br { bottom: 0; right: 0; border-bottom-width: 1px; border-right-width: 1px; }
+        
+        .glow-hover:hover {
+            box-shadow: 0 0 15px rgba(184, 195, 255, 0.15);
+            border-color: rgba(184, 195, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md grid-bg">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-12 py-4 h-20 bg-[#050505]/80 backdrop-blur-2xl border-b border-white/10 shadow-[0_0_20px_rgba(46,91,255,0.15)] transition-all duration-300 ease-in-out">
+<div class="flex-shrink-0">
+<span class="font-serif text-2xl font-light tracking-tighter text-blue-500">COSMICWEB</span>
+</div>
+<nav class="hidden md:flex gap-8">
+<a class="font-serif tracking-widest uppercase text-xs text-blue-400 border-b border-blue-500 pb-1 hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 ease-in-out active:scale-95" href="#">CONCEPTS</a>
+<a class="font-serif tracking-widest uppercase text-xs text-white/50 hover:text-white transition-colors hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 ease-in-out active:scale-95" href="#">OBSERVATORY</a>
+<a class="font-serif tracking-widest uppercase text-xs text-white/50 hover:text-white transition-colors hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 ease-in-out active:scale-95" href="#">ARCHIVES</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="text-white/50 hover:text-blue-400 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="text-white/50 hover:text-blue-400 transition-colors">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow pt-[120px] pb-margin px-margin lg:px-[100px] xl:px-[150px] relative z-10">
+<!-- Header Section -->
+<div class="mb-16 max-w-3xl">
+<div class="inline-flex items-center gap-2 px-3 py-1 mb-4 border border-outline/30 rounded-full bg-surface-container/50">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">THEORETICAL FRAMEWORKS</span>
+</div>
+<h1 class="font-display-xl text-display-xl text-on-background mb-4">Concepts Hub</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+                Explore the fundamental phenomena governing cosmic mechanics. Initialize simulations to analyze gravitational anomalies and temporal distortions.
+            </p>
+</div>
+<!-- Gallery Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Card 1: Black Hole -->
+<div class="glass-panel relative group overflow-hidden glow-hover transition-all duration-500 rounded-lg flex flex-col min-h-[450px]">
+<div class="bracket-tl"></div><div class="bracket-tr"></div><div class="bracket-bl"></div><div class="bracket-br"></div>
+<div class="h-48 w-full relative overflow-hidden bg-surface-container-low border-b border-white/5">
+<img alt="Black hole singularity visualization" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" data-alt="Dark dramatic visualization of a black hole with glowing accretion disk in deep space, high contrast, scientific realism" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuEXjllFv23P14eBiyZfa73eP9dqrtTKXxHDqtvwTXP_F6LZUiHHYWuJaVzbXFbUigxUo7o_aZZi6VqkgsfyzUrPpHukNokbEYwCQwCBnnd4FE0N_2BQMikvB1bZ4r5tU0AaHZGyScekUVdDSza6WWxYvTjVRqDtB02tHGE4wzfQDqgFR63wt9moUNRQ_Ml3AjhXv0W-d-wPY1JeKFpImKv0XCpfhLrfZgWZdR0V7jCkWBPx1gd3Gv4_O0H4GbRjhiJNCga6MjDyJ7"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest to-transparent opacity-80"></div>
+<div class="absolute top-3 left-3 bg-surface-container-highest/80 backdrop-blur-md px-2 py-1 rounded border border-outline/20">
+<span class="font-data-mono text-[10px] text-primary">ID: SGR-A*</span>
+</div>
+</div>
+<div class="p-hud-padding flex-grow flex flex-col justify-between relative z-10">
+<div>
+<h2 class="font-narrative-h1 text-narrative-h1 text-on-background mb-2">Black Hole</h2>
+<p class="font-body-md text-sm text-on-surface-variant leading-relaxed">
+                            Regions of spacetime where gravity is so strong that nothing, not even light, can escape. Analyze event horizon metrics and Hawking radiation patterns.
+                        </p>
+</div>
+<div class="mt-6 border-t border-white/5 pt-4">
+<button class="w-full py-2 border border-outline/30 hover:border-primary hover:text-primary transition-colors text-center font-label-caps text-label-caps tracking-widest text-on-surface-variant flex items-center justify-center gap-2 group-hover:shadow-[0_0_10px_rgba(184,195,255,0.1)]">
+<span class="material-symbols-outlined text-[16px]">play_arrow</span>
+                            INITIALIZE SEQUENCE
+                        </button>
+</div>
+</div>
+</div>
+<!-- Card 2: Wormhole -->
+<div class="glass-panel relative group overflow-hidden glow-hover transition-all duration-500 rounded-lg flex flex-col min-h-[450px]">
+<div class="bracket-tl"></div><div class="bracket-tr"></div><div class="bracket-bl"></div><div class="bracket-br"></div>
+<div class="h-48 w-full relative overflow-hidden bg-surface-container-low border-b border-white/5">
+<img alt="Wormhole conceptual rendering" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" data-alt="Abstract glowing geometric tunnel representing a wormhole in space, neon blue and purple hues, technical grid overlay" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBc4dQOq5e4E9IepdswU4yldbfdCrLzTejBsFfKaaAe-FjsfSQRPh5mUdUuqFl7GSvhaJ7FFVVK4gq_TtAcvVMk7WGUgdatkJrh3_J98FvGlgYnnKI_h7Y1VSiMQOooirYjlcaXL0xlvghQLkPkY-5yaaN0Indwy2NoENZyp4OlavTG1TLmL9vAFkXqK0Cc000nSyDJSqhQDzC3k_F9Wf5NEE7geEnV2gsXYHP3dZmOo6U6_mQuDffnwgWDGWlJGNKQ6J5TszsOyTKb"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest to-transparent opacity-80"></div>
+<div class="absolute top-3 left-3 bg-error-container/80 backdrop-blur-md px-2 py-1 rounded border border-error/20">
+<span class="font-data-mono text-[10px] text-error">THEORETICAL</span>
+</div>
+</div>
+<div class="p-hud-padding flex-grow flex flex-col justify-between relative z-10">
+<div>
+<h2 class="font-narrative-h1 text-narrative-h1 text-on-background mb-2">Wormhole</h2>
+<p class="font-body-md text-sm text-on-surface-variant leading-relaxed">
+                            Hypothetical topological features of spacetime that would fundamentally serve as a "shortcut" through the universe. Einstein-Rosen bridge modeling.
+                        </p>
+</div>
+<div class="mt-6 border-t border-white/5 pt-4 flex gap-4 items-center">
+<div class="w-12 h-12 rounded-full border border-tertiary/30 flex items-center justify-center">
+<span class="font-data-mono text-xs text-tertiary">0%</span>
+</div>
+<button class="flex-grow py-2 border border-outline/30 hover:border-primary hover:text-primary transition-colors text-center font-label-caps text-label-caps tracking-widest text-on-surface-variant flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px]">play_arrow</span>
+                            INITIALIZE SEQUENCE
+                        </button>
+</div>
+</div>
+</div>
+<!-- Card 3: Neutron Star -->
+<div class="glass-panel relative group overflow-hidden glow-hover transition-all duration-500 rounded-lg flex flex-col min-h-[450px]">
+<div class="bracket-tl"></div><div class="bracket-tr"></div><div class="bracket-bl"></div><div class="bracket-br"></div>
+<div class="h-48 w-full relative overflow-hidden bg-surface-container-low border-b border-white/5">
+<img alt="Neutron star pulsar visualization" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" data-alt="Intensely bright glowing core of a neutron star emitting twin beams of light against dark space, highly detailed scientific rendering" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXQeNGFlzn0cUEovjXiPgO7GB6S8JOrG9ZvTGeka8pXf6dTt1BrEWsSVReyZXLpo-p_guu8kMY6JMDHp8nlY_wi0RS1w_oMrAuK9vAx3Ul7R4lWNrw62uPNRuUqv8e5_DdtpyrUHcpQMEq-_bRKf9jY9khS961865XEHC-1gNnGVo_Pf3_C7WEtR2Gx80fd3W6DkuPA4xt44i-1iBDc8EIRvNJ4OPjF1p-64AzCFSqFiOhR26M0upMHGpn6L-KC69PtNgAl-2ovNnF"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest to-transparent opacity-80"></div>
+<div class="absolute top-3 left-3 bg-surface-container-highest/80 backdrop-blur-md px-2 py-1 rounded border border-outline/20">
+<span class="font-data-mono text-[10px] text-tertiary">ID: PSR B1919+21</span>
+</div>
+</div>
+<div class="p-hud-padding flex-grow flex flex-col justify-between relative z-10">
+<div>
+<h2 class="font-narrative-h1 text-narrative-h1 text-on-background mb-2">Neutron Star</h2>
+<p class="font-body-md text-sm text-on-surface-variant leading-relaxed">
+                            The collapsed core of a massive supergiant star. Monitor extreme magnetic fields, pulsar emissions, and degenerate matter density profiles.
+                        </p>
+</div>
+<div class="mt-6 border-t border-white/5 pt-4">
+<button class="w-full py-2 border border-outline/30 hover:border-primary hover:text-primary transition-colors text-center font-label-caps text-label-caps tracking-widest text-on-surface-variant flex items-center justify-center gap-2 group-hover:shadow-[0_0_10px_rgba(184,195,255,0.1)]">
+<span class="material-symbols-outlined text-[16px]">play_arrow</span>
+                            INITIALIZE SEQUENCE
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full px-12 py-10 flex flex-col md:flex-row justify-between items-center gap-4 mt-auto bg-[#050505] border-t border-white/5 no-shadows relative z-50">
+<div class="font-serif text-lg font-light tracking-tighter text-blue-500">
+            COSMICWEB
+        </div>
+<div class="flex gap-6">
+<a class="font-serif tracking-widest uppercase text-[10px] text-white/30 hover:text-blue-400 transition-colors cursor-pointer" href="#">Quantum Protocol</a>
+<a class="font-serif tracking-widest uppercase text-[10px] text-white/30 hover:text-blue-400 transition-colors cursor-pointer" href="#">Support</a>
+<a class="font-serif tracking-widest uppercase text-[10px] text-white/30 hover:text-blue-400 transition-colors cursor-pointer" href="#">System Status</a>
+</div>
+<div class="font-serif tracking-widest uppercase text-[10px] text-white/30">
+            © 2024 COSMICWEB RESEARCH LABS. SYSTEM READY. DATA SYNCHRONIZED.
+        </div>
+</footer>
+</body></html>

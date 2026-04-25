@@ -93,6 +93,7 @@ export default function PlanetDetailPage({ params }: { params: { slug: string } 
             className="absolute inset-0 cosmos-grid-bg pointer-events-none rounded-3xl"
           />
           <PlanetVisual
+            bodyId={body.id}
             colorHex={body.render.colorHex}
             ringed={body.render.ringed}
             size="xl"
@@ -209,6 +210,7 @@ export default function PlanetDetailPage({ params }: { params: { slug: string } 
                 className="group flex items-center gap-5 rounded-2xl border border-border bg-panel/70 p-5 transition-colors hover:border-accent/40 hover:bg-panel"
               >
                 <PlanetVisual
+                  bodyId={childMoon.id}
                   colorHex={childMoon.render.colorHex}
                   ringed={childMoon.render.ringed}
                   size="md"
@@ -248,6 +250,7 @@ export default function PlanetDetailPage({ params }: { params: { slug: string } 
               className="group flex items-center gap-5 rounded-2xl border border-border bg-panel/70 p-5 transition-colors hover:border-accent/40 hover:bg-panel"
             >
               <PlanetVisual
+                bodyId={parent.id}
                 colorHex={parent.render.colorHex}
                 ringed={parent.render.ringed}
                 size="md"

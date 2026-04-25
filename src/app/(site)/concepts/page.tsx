@@ -27,7 +27,7 @@ interface Concept {
   status: ConceptStatus;
   statusLabel: string;
   /** Tailwind classes for the poster background. */
-  posterClassName: string;
+  posterClassName?: string;
   /** Decorative foreground layer — a simple CSS rendition of the concept. */
   Poster: () => React.ReactNode;
 }
@@ -40,8 +40,6 @@ const CONCEPTS: readonly Concept[] = [
       "A dark gravity well that traps light. The only astrophysical object humanity has photographed that warps spacetime at this scale.",
     status: "real-time",
     statusLabel: "Real-time simulation",
-    posterClassName:
-      "bg-[radial-gradient(circle_at_50%_50%,#0b0b10_0%,#0b0b10_28%,#1a0f08_42%,#6a2b0a_58%,#c86a1a_70%,#2a1408_84%,#05060a_100%)]",
     Poster: BlackHolePoster,
   },
   {
@@ -51,8 +49,6 @@ const CONCEPTS: readonly Concept[] = [
       "A theoretical tunnel through bent spacetime. Predicted by Einstein in 1935. Never observed, anywhere, by anyone.",
     status: "theoretical",
     statusLabel: "Theoretical · never observed",
-    posterClassName:
-      "bg-[radial-gradient(circle_at_50%_50%,#0a0612_0%,#140a24_30%,#2a1458_52%,#4d2bb0_66%,#6ed0ff_76%,#1a1630_88%,#05060a_100%)]",
     Poster: WormholePoster,
   },
   {
@@ -62,8 +58,6 @@ const CONCEPTS: readonly Concept[] = [
       "A stellar core compressed to the density of an atomic nucleus. Spinning hundreds of times per second, sweeping beams of radiation across the galaxy.",
     status: "real-time",
     statusLabel: "Real-time simulation",
-    posterClassName:
-      "bg-[radial-gradient(circle_at_50%_50%,#05070d_0%,#0a1226_32%,#10325e_52%,#2b8ad6_66%,#a7e1ff_74%,#0a1226_88%,#05060a_100%)]",
     Poster: NeutronStarPoster,
   },
 ] as const;
@@ -141,7 +135,8 @@ function ConceptCard({ concept }: { concept: Concept }) {
         aria-hidden
         className={cn(
           "relative aspect-[4/3] w-full overflow-hidden",
-          concept.posterClassName
+          // Keep backgrounds calm and consistent; the Poster supplies the identity.
+          concept.posterClassName ?? "bg-[radial-gradient(circle_at_50%_40%,hsl(var(--glass)/0.9)_0%,hsl(var(--background))_70%)]"
         )}
       >
         <concept.Poster />
@@ -216,6 +211,19 @@ function ConceptCard({ concept }: { concept: Concept }) {
 function BlackHolePoster() {
   return (
     <>
+      {/* Photographic anchor: EHT (M87*) — CC BY 4.0, already shipped in /public/images/eht. */}
+      <div aria-hidden className="absolute inset-0">
+        <img
+          src="/images/eht/m87.jpg"
+          alt=""
+          className="h-full w-full object-cover opacity-55 mix-blend-screen"
+          loading="lazy"
+          decoding="async"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/40" />
+      </div>
+
       {/* Accretion disk — flattened ellipse with bright leading edge. */}
       <div
         aria-hidden
@@ -247,32 +255,59 @@ function BlackHolePoster() {
 function WormholePoster() {
   return (
     <>
-      {/* Rim — chromatic edge of the throat sphere. */}
+      {/* SVG turbulence gives a premium “lensing” feel without WebGL. */}
+      <svg
+        aria-hidden
+        className="absolute inset-0 h-full w-full"
+        viewBox="0 0 100 75"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <radialGradient id="wh-core" cx="45%" cy="45%" r="60%">
+            <stop offset="0%" stopColor="rgba(210,230,255,0.95)" />
+            <stop offset="35%" stopColor="rgba(120,160,255,0.55)" />
+            <stop offset="70%" stopColor="rgba(35,20,85,0.85)" />
+            <stop offset="100%" stopColor="rgba(5,6,10,1)" />
+          </radialGradient>
+          <filter id="wh-noise">
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" />
+            <feDisplacementMap in="SourceGraphic" scale="10" />
+          </filter>
+        </defs>
+
+        {/* Rim glow */}
+        <ellipse
+          cx="50"
+          cy="38"
+          rx="28"
+          ry="18"
+          fill="none"
+          stroke="rgba(160,120,255,0.55)"
+          strokeWidth="6"
+          filter="url(#wh-noise)"
+          opacity="0.85"
+        />
+        <ellipse
+          cx="50"
+          cy="38"
+          rx="28"
+          ry="18"
+          fill="none"
+          stroke="rgba(110,208,255,0.45)"
+          strokeWidth="2"
+          opacity="0.9"
+        />
+        {/* Throat */}
+        <ellipse cx="50" cy="38" rx="19" ry="12" fill="url(#wh-core)" opacity="0.95" />
+      </svg>
+
+      {/* Specular “window” highlight */}
       <div
         aria-hidden
-        className="absolute left-1/2 top-1/2 h-[62%] w-[62%] -translate-x-1/2 -translate-y-1/2 rounded-full"
+        className="absolute left-1/2 top-1/2 h-[18%] w-[18%] -translate-x-[78%] -translate-y-[130%] rounded-full"
         style={{
           background:
-            "conic-gradient(from 180deg at 50% 50%, rgba(120,90,255,0.55), rgba(90,200,255,0.6), rgba(220,120,255,0.5), rgba(120,90,255,0.55))",
-          filter: "blur(6px)",
-        }}
-      />
-      {/* Throat — "the other sky" showing through. */}
-      <div
-        aria-hidden
-        className="absolute left-1/2 top-1/2 h-[46%] w-[46%] -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{
-          background:
-            "radial-gradient(circle at 45% 45%, rgba(200,220,255,0.85) 0%, rgba(90,140,220,0.55) 35%, rgba(30,20,80,0.85) 70%, rgba(5,6,10,1) 100%)",
-        }}
-      />
-      {/* Inner highlight suggesting the window-onto-elsewhere. */}
-      <div
-        aria-hidden
-        className="absolute left-1/2 top-1/2 h-[18%] w-[18%] -translate-x-[70%] -translate-y-[120%] rounded-full"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(220,240,255,0.9) 0%, rgba(220,240,255,0) 70%)",
+            "radial-gradient(circle, rgba(240,250,255,0.85) 0%, rgba(240,250,255,0) 72%)",
         }}
       />
     </>
@@ -282,33 +317,48 @@ function WormholePoster() {
 function NeutronStarPoster() {
   return (
     <>
-      {/* Two sweeping beams — the defining visual of a pulsar. */}
+      <svg
+        aria-hidden
+        className="absolute inset-0 h-full w-full"
+        viewBox="0 0 100 75"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <radialGradient id="ns-core" cx="50%" cy="50%" r="55%">
+            <stop offset="0%" stopColor="rgba(255,255,255,1)" />
+            <stop offset="40%" stopColor="rgba(205,235,255,0.92)" />
+            <stop offset="70%" stopColor="rgba(80,150,235,0.65)" />
+            <stop offset="100%" stopColor="rgba(10,20,40,0)" />
+          </radialGradient>
+          <filter id="ns-glow">
+            <feGaussianBlur stdDeviation="1.6" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Beams */}
+        <g filter="url(#ns-glow)" opacity="0.95">
+          <rect x="46" y="-10" width="8" height="120" fill="rgba(160,210,255,0.18)" transform="rotate(22 50 38)" />
+          <rect x="47.5" y="-10" width="5" height="120" fill="rgba(220,245,255,0.32)" transform="rotate(22 50 38)" />
+          <rect x="46" y="-10" width="8" height="120" fill="rgba(160,210,255,0.12)" transform="rotate(-158 50 38)" />
+          <rect x="47.5" y="-10" width="5" height="120" fill="rgba(200,235,255,0.22)" transform="rotate(-158 50 38)" />
+        </g>
+
+        {/* Core */}
+        <circle cx="50" cy="38" r="6" fill="url(#ns-core)" />
+      </svg>
+
+      {/* Magnetic-field hint: subtle arcs */}
       <div
         aria-hidden
-        className="absolute left-1/2 top-1/2 h-[160%] w-[18%] -translate-x-1/2 -translate-y-1/2 rotate-[22deg]"
+        className="absolute left-1/2 top-1/2 h-[72%] w-[72%] -translate-x-1/2 -translate-y-1/2 rounded-full"
         style={{
-          background:
-            "linear-gradient(to bottom, rgba(160,210,255,0) 0%, rgba(160,210,255,0.55) 46%, rgba(220,240,255,0.9) 50%, rgba(160,210,255,0.55) 54%, rgba(160,210,255,0) 100%)",
-          filter: "blur(2px)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="absolute left-1/2 top-1/2 h-[160%] w-[18%] -translate-x-1/2 -translate-y-1/2 rotate-[-158deg]"
-        style={{
-          background:
-            "linear-gradient(to bottom, rgba(160,210,255,0) 0%, rgba(160,210,255,0.35) 46%, rgba(200,230,255,0.7) 50%, rgba(160,210,255,0.35) 54%, rgba(160,210,255,0) 100%)",
-          filter: "blur(2.5px)",
-        }}
-      />
-      {/* Core — a tight, hot pinpoint. */}
-      <div
-        aria-hidden
-        className="absolute left-1/2 top-1/2 h-[14%] w-[14%] -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(200,230,255,0.9) 40%, rgba(80,140,220,0.6) 70%, rgba(10,20,40,0) 100%)",
-          boxShadow: "0 0 30px 6px rgba(160,210,255,0.55)",
+          boxShadow:
+            "inset 0 0 0 1px rgba(160,210,255,0.16), 0 0 26px 2px rgba(120,190,255,0.10)",
+          transform: "translate(-50%, -50%) rotate(18deg) scaleY(0.65)",
         }}
       />
     </>

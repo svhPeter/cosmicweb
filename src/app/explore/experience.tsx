@@ -10,7 +10,6 @@ import { useExploreStore } from "@/store/explore-store";
 import { ExploreHud } from "@/components/space/explore-hud";
 import { ExploreSidebar } from "@/components/space/explore-sidebar";
 import { SelectionPanel } from "@/components/space/selection-panel";
-import { DeepSkyPanel } from "@/components/space/deep-sky-panel";
 import { SceneErrorBoundary } from "@/components/space/scene-error-boundary";
 import { ExploreLoader } from "@/components/space/explore-loader";
 
@@ -156,18 +155,7 @@ export default function Experience() {
                 <SelectionPanel />
               </div>
 
-              {/* Screen-space HUD for named deep-sky anchors (galaxies,
-                  nebulae, Sgr A*). Fades in while a landmark is hovered
-                  or pinned; lives in the same intro-fade zone so it's
-                  hidden during the opening flyby. */}
-              <div
-                className={[
-                  "relative z-20 transition-opacity duration-700",
-                  introActive ? "opacity-0 pointer-events-none" : "opacity-100",
-                ].join(" ")}
-              >
-                <DeepSkyPanel />
-              </div>
+              {/* Named deep-sky inspection now reuses the main SelectionPanel. */}
             </>
           }
         />

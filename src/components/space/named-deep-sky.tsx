@@ -10,7 +10,7 @@ import {
   type DeepSkyEntry,
 } from "@/lib/space/deep-sky-catalog";
 import { useDeviceTier } from "@/lib/use-device-tier";
-import { useDeepSkyStore } from "@/store/deep-sky-store";
+import { useExploreStore } from "@/store/explore-store";
 
 /**
  * Named deep-sky anchors — the "landmarks" of the cosmic scene.
@@ -52,11 +52,12 @@ export function NamedDeepSky() {
 
 function NamedObject({ entry }: { entry: DeepSkyEntry }) {
   const { gl } = useThree();
-  const setHovered = useDeepSkyStore((s) => s.setHovered);
-  const togglePinned = useDeepSkyStore((s) => s.togglePinned);
-  const hoveredId = useDeepSkyStore((s) => s.hoveredId);
-  const pinnedId = useDeepSkyStore((s) => s.pinnedId);
-  const isActive = hoveredId === entry.id || pinnedId === entry.id;
+  const setHovered = useExploreStore((s) => s.setHoveredSceneObject);
+  const setSelected = useExploreStore((s) => s.setSelectedSceneObject);
+  const hoveredId = useExploreStore((s) => s.hoveredSceneObjectId);
+  const focusedId = useExploreStore((s) => s.focusedSceneObjectId);
+  const selectedId = useExploreStore((s) => s.selectedSceneObjectId);
+  const isActive = hoveredId === entry.id || focusedId === entry.id || selectedId === entry.id;
 
   const materialRef = useRef<THREE.ShaderMaterial | null>(null);
   const hoverTargetRef = useRef(0);
@@ -97,14 +98,14 @@ function NamedObject({ entry }: { entry: DeepSkyEntry }) {
     e.stopPropagation();
     // Only clear hover if *this* object is still the hovered one — guards
     // against a race where another onEnter already claimed hover.
-    if (useDeepSkyStore.getState().hoveredId === entry.id) {
+    if (useExploreStore.getState().hoveredSceneObjectId === entry.id) {
       setHovered(null);
     }
     gl.domElement.style.cursor = "";
   }
   function onClick(e: { stopPropagation: () => void }) {
     e.stopPropagation();
-    togglePinned(entry.id);
+    setSelected(entry.id);
   }
 
   return (

@@ -15,6 +15,15 @@
     --accent: 190 96% 62%;          /* subtle electric cyan */
     --accent-soft: 190 70% 38%;
     --accent-foreground: 225 40% 6%;
+    /* Secondary accent (Stitch “nebula blue” idea) — used sparingly. */
+    --accent-2: 230 100% 86%;
+    --accent-2-soft: 232 70% 62%;
+    /* Glass material tint for HUD surfaces (separate from panel base). */
+    --glass: 228 28% 8%;
+    /* Stronger outline for active/diagnostic HUD states. */
+    --border-strong: 225 18% 28%;
+    /* Optional blueprint grid line color (keep opacity extremely low). */
+    --grid: 210 20% 96%;
     --danger: 0 72% 58%;
     --success: 150 60% 48%;
 
@@ -112,6 +121,59 @@
 }
 
 @layer components {
+  /* Premium observatory glass — use for floating HUD surfaces.
+     Keep blur moderate (mobile GPUs) and rely on tint for readability. */
+  .cosmos-glass {
+    background: hsl(var(--glass) / 0.55);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid hsl(var(--border) / 0.55);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 24px 60px -30px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Denser technical HUD card. */
+  .cosmos-hud-card {
+    background: hsl(var(--glass) / 0.45);
+    backdrop-filter: blur(18px) saturate(145%);
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+    border: 1px solid hsl(var(--border) / 0.55);
+    border-radius: 14px;
+  }
+
+  /* Instrument label — small caps, high tracking, calm contrast. */
+  .cosmos-label-caps {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground) / 0.92);
+  }
+
+  /* Numeric/data readout — mono, tabular, with optional accent value. */
+  .cosmos-data {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    color: hsl(var(--foreground) / 0.92);
+  }
+  .cosmos-data-accent {
+    color: hsl(var(--accent) / 0.95);
+    text-shadow: 0 0 18px hsl(var(--accent) / 0.12);
+  }
+  .cosmos-data-accent2 {
+    color: hsl(var(--accent-2) / 0.95);
+    text-shadow: 0 0 18px hsl(var(--accent-2) / 0.12);
+  }
+
+  /* Blueprint grid overlay — opt-in only. Keep it extremely subtle.
+     Recommended max opacity: 0.035–0.06 depending on background. */
+  .cosmos-blueprint-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--grid) / 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--grid) / 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
   .cosmos-grid-bg {
     background-image:
       radial-gradient(ellipse 60% 40% at 50% 0%, hsl(var(--accent) / 0.08), transparent 70%),
@@ -152,6 +214,22 @@
       background: hsl(var(--panel) / 0.82);
       backdrop-filter: blur(6px) saturate(130%);
       -webkit-backdrop-filter: blur(6px) saturate(130%);
+    }
+
+    .cosmos-glass {
+      background: hsl(var(--glass) / 0.72);
+      backdrop-filter: blur(10px) saturate(130%);
+      -webkit-backdrop-filter: blur(10px) saturate(130%);
+    }
+    .cosmos-hud-card {
+      background: hsl(var(--glass) / 0.62);
+      backdrop-filter: blur(10px) saturate(130%);
+      -webkit-backdrop-filter: blur(10px) saturate(130%);
+    }
+    .cosmos-blueprint-grid {
+      background-image:
+        linear-gradient(to right, hsl(var(--grid) / 0.035) 1px, transparent 1px),
+        linear-gradient(to bottom, hsl(var(--grid) / 0.035) 1px, transparent 1px);
     }
   }
 

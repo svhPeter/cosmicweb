@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ASTRAEUS - Mars Physical Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&amp;family=Noto+Serif:wght@500;600&amp;family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#c1c7cf",
+                        "primary": "#b8c3ff",
+                        "surface-bright": "#373943",
+                        "on-surface-variant": "#c4c5d9",
+                        "on-primary": "#002388",
+                        "on-primary-container": "#efefff",
+                        "background": "#11131c",
+                        "on-primary-fixed": "#001356",
+                        "surface-tint": "#b8c3ff",
+                        "surface-container-lowest": "#0c0e17",
+                        "on-tertiary": "#003731",
+                        "on-error-container": "#ffdad6",
+                        "surface": "#11131c",
+                        "on-tertiary-fixed-variant": "#005048",
+                        "surface-container-low": "#191b24",
+                        "surface-container-highest": "#33343e",
+                        "tertiary-container": "#007b6e",
+                        "error-container": "#93000a",
+                        "on-tertiary-container": "#b1fff1",
+                        "primary-container": "#2e5bff",
+                        "on-error": "#690005",
+                        "surface-container": "#1d1f29",
+                        "error": "#ffb4ab",
+                        "on-surface": "#e2e1ef",
+                        "on-secondary-fixed-variant": "#41474e",
+                        "tertiary": "#4fdbc8",
+                        "on-secondary": "#2b3137",
+                        "on-primary-fixed-variant": "#0035be",
+                        "inverse-surface": "#e2e1ef",
+                        "inverse-primary": "#124af0",
+                        "primary-fixed": "#dde1ff",
+                        "tertiary-fixed-dim": "#4fdbc8",
+                        "outline-variant": "#434656",
+                        "primary-fixed-dim": "#b8c3ff",
+                        "on-secondary-container": "#afb6bd",
+                        "surface-variant": "#33343e",
+                        "tertiary-fixed": "#71f8e4",
+                        "surface-dim": "#11131c",
+                        "outline": "#8e90a2",
+                        "secondary-container": "#41474e",
+                        "inverse-on-surface": "#2e303a",
+                        "on-secondary-fixed": "#161c22",
+                        "on-tertiary-fixed": "#00201c",
+                        "on-background": "#e2e1ef",
+                        "surface-container-high": "#282933",
+                        "secondary": "#c1c7cf",
+                        "secondary-fixed": "#dde3eb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin": "48px",
+                        "grid-unit": "8px",
+                        "hud-padding": "12px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "display-xl": ["notoSerif", "serif"],
+                        "body-md": ["inter", "sans-serif"],
+                        "label-caps": ["spaceGrotesk", "sans-serif"],
+                        "data-mono": ["spaceGrotesk", "sans-serif"],
+                        "narrative-h1": ["notoSerif", "serif"]
+                    },
+                    "fontSize": {
+                        "display-xl": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-caps": ["11px", { "lineHeight": "1", "letterSpacing": "0.15em", "fontWeight": "700" }],
+                        "data-mono": ["14px", { "lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "narrative-h1": ["32px", { "lineHeight": "1.2", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+            background-image: linear-gradient(theme('colors.outline-variant') 1px, transparent 1px),
+                              linear-gradient(90deg, theme('colors.outline-variant') 1px, transparent 1px);
+            background-size: 8px 8px;
+            background-position: -1px -1px;
+            background-blend-mode: overlay;
+        }
+        .bg-grid-overlay {
+            background-color: rgba(17, 19, 28, 0.95);
+        }
+        .hud-bracket-tl {
+            position: absolute; top: 0; left: 0; width: 8px; height: 8px;
+            border-top: 1px solid theme('colors.outline'); border-left: 1px solid theme('colors.outline');
+        }
+        .hud-bracket-br {
+            position: absolute; bottom: 0; right: 0; width: 8px; height: 8px;
+            border-bottom: 1px solid theme('colors.outline'); border-right: 1px solid theme('colors.outline');
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col bg-grid-overlay">
+<!-- TopAppBar -->
+<nav class="fixed top-0 w-full z-50 border-b border-white/10 shadow-[0_0_20px_rgba(46,91,255,0.15)] bg-neutral-950/40 backdrop-blur-xl flex items-center justify-between px-12 h-20">
+<div class="flex items-center gap-12">
+<div class="text-2xl font-black text-blue-500 tracking-tighter">ASTRAEUS</div>
+<ul class="hidden md:flex items-center gap-8 font-serif text-xs tracking-[0.2em] uppercase">
+<li class="cursor-pointer text-white/60 hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 active:scale-95 transition-transform duration-150">Home</li>
+<li class="cursor-pointer text-blue-400 border-b-2 border-blue-500 pb-1 hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 active:scale-95 transition-transform duration-150">Explore</li>
+<li class="cursor-pointer text-white/60 hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 active:scale-95 transition-transform duration-150">Today</li>
+<li class="cursor-pointer text-white/60 hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 active:scale-95 transition-transform duration-150">About</li>
+</ul>
+</div>
+<div class="flex items-center gap-6">
+<span class="material-symbols-outlined text-white/60 hover:text-blue-400 transition-colors cursor-pointer" data-icon="account_circle">account_circle</span>
+<span class="material-symbols-outlined text-white/60 hover:text-blue-400 transition-colors cursor-pointer" data-icon="settings">settings</span>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="flex-grow pt-32 pb-margin px-margin max-w-screen-2xl mx-auto w-full flex flex-col gap-16">
+<!-- Hero Section -->
+<header class="relative w-full rounded-lg overflow-hidden border border-outline-variant/30 aspect-[21/9] flex items-end p-12 bg-surface-container-lowest">
+<img alt="Mars surface" class="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-luminosity" data-alt="High-resolution orbital view of Mars showing rusty red terrain, deep craters, and the Valles Marineris canyon system against black space." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0_WiqZu5JxJG9y-l4WApifNQdkrtWVdc3ebT3HKRHRCniIRzFgh9HQVgRh_Jubn2vmULbqVqYgCE2QPsgKpfOWyzP5ClYGHDl3-_GDCpMk4WY2rkooSX5iVmPumrIZ00mOKKkGJlXkpjNktp-h8AXZ_9FhH_XutbSPXR3onIAx0esds6ZpkmqWEOoZOwbssf-oUD0MTUrnSLc-bLOIXlfntYHiQa3lTATxp8rG73lylrtIxiaQZG9HAhG_oSiWZUKNJsIjXVskZlQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
+<div class="relative z-10 w-full flex justify-between items-end">
+<div class="flex flex-col gap-4 max-w-2xl">
+<div class="flex items-center gap-3">
+<span class="px-2 py-1 border border-primary/30 text-primary font-label-caps text-label-caps bg-primary/5 rounded-sm backdrop-blur-sm">DESIGNATION: SOL-4</span>
+<span class="px-2 py-1 border border-outline-variant text-on-surface-variant font-label-caps text-label-caps bg-surface-container/50 rounded-sm backdrop-blur-sm">TERRESTRIAL</span>
+</div>
+<h1 class="font-display-xl text-display-xl text-on-primary-container tracking-tight">Mars</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xl">
+                        The fourth planet from the Sun, a dusty, cold, desert world with a very thin atmosphere. It is a dynamic planet with seasons, polar ice caps, canyons, and extinct volcanoes.
+                    </p>
+</div>
+<!-- Primary Action -->
+<button class="group flex items-center gap-3 px-6 py-4 border border-outline hover:border-primary bg-surface/40 backdrop-blur-md rounded-DEFAULT transition-all duration-300 hover:shadow-[0_0_20px_rgba(184,195,255,0.15)]">
+<span class="material-symbols-outlined text-primary group-hover:drop-shadow-[0_0_8px_rgba(184,195,255,0.8)]">360</span>
+<span class="font-label-caps text-label-caps text-primary tracking-[0.2em] uppercase">Enter Explorer View</span>
+</button>
+</div>
+</header>
+<!-- Physical Profile Grid -->
+<section class="flex flex-col gap-6">
+<h2 class="font-label-caps text-label-caps text-primary tracking-[0.2em] uppercase flex items-center gap-4">
+<span class="w-8 h-[1px] bg-primary/50"></span> Physical Profile
+            </h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Stat Card 1 -->
+<div class="relative p-hud-padding bg-surface-container-low/80 backdrop-blur-xl border border-outline-variant/30 rounded-DEFAULT flex flex-col gap-8">
+<div class="hud-bracket-tl"></div>
+<div class="hud-bracket-br"></div>
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-label-caps text-tertiary uppercase tracking-widest">Radius</span>
+<span class="material-symbols-outlined text-outline-variant text-sm" data-icon="straighten">straighten</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-data-mono text-display-xl text-on-surface">3,389</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">KM</span>
+</div>
+</div>
+<!-- Stat Card 2 -->
+<div class="relative p-hud-padding bg-surface-container-low/80 backdrop-blur-xl border border-outline-variant/30 rounded-DEFAULT flex flex-col gap-8">
+<div class="hud-bracket-tl"></div>
+<div class="hud-bracket-br"></div>
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-label-caps text-tertiary uppercase tracking-widest">Mass</span>
+<span class="material-symbols-outlined text-outline-variant text-sm" data-icon="weight">weight</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-data-mono text-display-xl text-on-surface">6.39</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">× 10²³ KG</span>
+</div>
+</div>
+<!-- Stat Card 3 -->
+<div class="relative p-hud-padding bg-surface-container-low/80 backdrop-blur-xl border border-outline-variant/30 rounded-DEFAULT flex flex-col gap-8">
+<div class="hud-bracket-tl"></div>
+<div class="hud-bracket-br"></div>
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-label-caps text-tertiary uppercase tracking-widest">Day Length</span>
+<span class="material-symbols-outlined text-outline-variant text-sm" data-icon="schedule">schedule</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-data-mono text-display-xl text-on-surface">24.6</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">HOURS</span>
+</div>
+</div>
+<!-- Stat Card 4 -->
+<div class="relative p-hud-padding bg-surface-container-low/80 backdrop-blur-xl border border-outline-variant/30 rounded-DEFAULT flex flex-col gap-8">
+<div class="hud-bracket-tl"></div>
+<div class="hud-bracket-br"></div>
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-label-caps text-tertiary uppercase tracking-widest">Moons</span>
+<span class="material-symbols-outlined text-outline-variant text-sm" data-icon="trip_origin">trip_origin</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-data-mono text-display-xl text-on-surface">2</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">PHOBOS, DEIMOS</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Scientific Narrative -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-gutter py-12 border-t border-outline-variant/20">
+<div class="lg:col-span-3 flex flex-col gap-4">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant tracking-[0.2em] uppercase">Data Provenance</h3>
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-2 border border-outline-variant/50 px-3 py-2 bg-surface-container-low/30 rounded-sm w-max">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="satellite_alt">satellite_alt</span>
+<span class="font-label-caps text-label-caps text-on-surface">NASA JPL-CALTECH</span>
+</div>
+<div class="flex items-center gap-2 border border-outline-variant/50 px-3 py-2 bg-surface-container-low/30 rounded-sm w-max">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="biotech">biotech</span>
+<span class="font-label-caps text-label-caps text-on-surface">ESA MARS EXPRESS</span>
+</div>
+</div>
+</div>
+<div class="lg:col-span-8 lg:col-start-5 flex flex-col gap-8">
+<h2 class="font-narrative-h1 text-narrative-h1 text-on-primary-container">The Red Planet's Evolution</h2>
+<div class="font-body-md text-body-md text-on-surface-variant space-y-6">
+<p>
+                        Mars is one of the most explored bodies in our solar system, and it's the only planet where we've sent rovers to roam the alien landscape. NASA currently has two rovers (Curiosity and Perseverance), one lander (InSight), and one helicopter (Ingenuity) exploring the surface of Mars.
+                    </p>
+<p>
+                        Billions of years ago, Mars was much warmer and wetter than it is today. Evidence points to a thick atmosphere and liquid water forming deep oceans, lakes, and winding rivers. The loss of its magnetic field caused the solar wind to strip away much of the atmosphere, leaving the frozen desert we observe today.
+                    </p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 border-t border-white/5 bg-neutral-950 flex flex-col items-center justify-center gap-6 border-t border-white/10 mt-auto z-10 relative">
+<div class="text-blue-500 font-bold font-serif text-[9px] tracking-[0.3em] uppercase">
+            ASTRAEUS
+        </div>
+<ul class="flex gap-8 font-serif text-[9px] tracking-[0.3em] uppercase">
+<li class="cursor-pointer text-white/30 hover:text-blue-400 transition-colors">Data Sources</li>
+<li class="cursor-pointer text-white/30 hover:text-blue-400 transition-colors">Privacy Protocol</li>
+<li class="cursor-pointer text-white/30 hover:text-blue-400 transition-colors">Contact Station</li>
+</ul>
+<div class="font-serif text-[9px] tracking-[0.3em] uppercase text-white/30 text-center">
+            © 2024 ASTRAEUS INTERACTIVE. SCIENTIFIC BLUEPRINT MODEL.
+        </div>
+</footer>
+</body></html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CosmicWeb - Black Hole Observatory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@500;600&amp;family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#0c0e17",
+                      "on-primary-container": "#efefff",
+                      "inverse-primary": "#124af0",
+                      "outline-variant": "#434656",
+                      "inverse-surface": "#e2e1ef",
+                      "tertiary-container": "#007b6e",
+                      "outline": "#8e90a2",
+                      "on-secondary": "#2b3137",
+                      "primary-container": "#2e5bff",
+                      "error": "#ffb4ab",
+                      "surface": "#11131c",
+                      "on-primary": "#002388",
+                      "surface-variant": "#33343e",
+                      "surface-dim": "#11131c",
+                      "secondary-fixed-dim": "#c1c7cf",
+                      "tertiary": "#4fdbc8",
+                      "secondary-fixed": "#dde3eb",
+                      "on-secondary-fixed-variant": "#41474e",
+                      "secondary-container": "#41474e",
+                      "on-tertiary-fixed-variant": "#005048",
+                      "on-error-container": "#ffdad6",
+                      "error-container": "#93000a",
+                      "on-tertiary-container": "#b1fff1",
+                      "on-primary-fixed-variant": "#0035be",
+                      "on-tertiary": "#003731",
+                      "surface-tint": "#b8c3ff",
+                      "surface-container-low": "#191b24",
+                      "secondary": "#c1c7cf",
+                      "background": "#11131c",
+                      "on-surface": "#e2e1ef",
+                      "tertiary-fixed": "#71f8e4",
+                      "surface-container-highest": "#33343e",
+                      "on-secondary-fixed": "#161c22",
+                      "on-error": "#690005",
+                      "surface-container": "#1d1f29",
+                      "on-primary-fixed": "#001356",
+                      "on-secondary-container": "#afb6bd",
+                      "on-tertiary-fixed": "#00201c",
+                      "inverse-on-surface": "#2e303a",
+                      "tertiary-fixed-dim": "#4fdbc8",
+                      "primary-fixed-dim": "#b8c3ff",
+                      "surface-bright": "#373943",
+                      "on-surface-variant": "#c4c5d9",
+                      "primary-fixed": "#dde1ff",
+                      "primary": "#b8c3ff",
+                      "surface-container-high": "#282933",
+                      "on-background": "#e2e1ef"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "margin": "48px",
+                      "hud-padding": "12px",
+                      "grid-unit": "8px"
+              },
+              "fontFamily": {
+                      "narrative-h1": [
+                              "notoSerif"
+                      ],
+                      "label-caps": [
+                              "spaceGrotesk"
+                      ],
+                      "data-mono": [
+                              "spaceGrotesk"
+                      ],
+                      "display-xl": [
+                              "notoSerif"
+                      ],
+                      "body-md": [
+                              "inter"
+                      ]
+              },
+              "fontSize": {
+                      "narrative-h1": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.15em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-mono": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-xl": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .blueprint-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        }
+        .hud-border {
+            position: relative;
+        }
+        .hud-border::before, .hud-border::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-color: rgba(255, 255, 255, 0.3);
+            border-style: solid;
+        }
+        .hud-border-top-left::before { top: 0; left: 0; border-width: 1px 0 0 1px; }
+        .hud-border-bottom-right::after { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md blueprint-grid overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-12 py-4 h-20 bg-[#050505]/80 backdrop-blur-2xl border-b border-white/10 shadow-[0_0_20px_rgba(46,91,255,0.15)]">
+<div class="flex items-center gap-8">
+<div class="font-serif text-2xl font-light tracking-tighter text-blue-500">COSMICWEB</div>
+<nav class="hidden md:flex gap-6">
+<a class="font-serif tracking-widest uppercase text-xs text-blue-400 border-b border-blue-500 pb-1 transition-all duration-300 ease-in-out active:scale-95" href="#">CONCEPTS</a>
+<a class="font-serif tracking-widest uppercase text-xs text-white/50 hover:text-white transition-colors hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 ease-in-out active:scale-95" href="#">OBSERVATORY</a>
+<a class="font-serif tracking-widest uppercase text-xs text-white/50 hover:text-white transition-colors hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 ease-in-out active:scale-95" href="#">ARCHIVES</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-blue-600 dark:text-blue-400 hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 ease-in-out active:scale-95">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="text-blue-600 dark:text-blue-400 hover:text-blue-400 hover:drop-shadow-[0_0_5px_rgba(46,91,255,0.8)] transition-all duration-300 ease-in-out active:scale-95">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow pt-24 pb-12 px-margin relative z-10 flex flex-col">
+<!-- Back Navigation -->
+<div class="mb-grid-unit">
+<button class="flex items-center gap-2 text-primary font-label-caps text-label-caps hover:text-primary-fixed drop-shadow-[0_0_8px_rgba(184,195,255,0.3)] transition-colors">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+                RETURN TO CONCEPTS HUB
+            </button>
+</div>
+<!-- Hero Visualization Area -->
+<div class="relative w-full h-[716px] min-h-[500px] border border-white/10 bg-surface-container-lowest/50 backdrop-blur-md flex items-center justify-center overflow-hidden group">
+<!-- Simulated Black Hole Background -->
+<div class="absolute inset-0 z-0">
+<img alt="Black Hole Visualization" class="w-full h-full object-cover opacity-80 mix-blend-screen" data-alt="Massive photorealistic black hole with glowing orange accretion disk and severe gravitational lensing against a deep starfield, cinematic dramatic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJXxGDCbqD9Q6F2O2q32S9bYb2CfpX7v8d6Xx04qXFm3kjncI-FkTw14SZ8VkrkmSustX8GOoZ40JBPgG1aDmz2gl4Gf2brqDnrkJFeGnE5QEAkVD5k_wYUtXNCI9Hwg2vZP6TW3sPPmRSJZz4MnD1e9BPWhnWCZ3eTFn_NZ7aaUNOGBGvraQRHcTgi6hDbhmwLxG5zbtXDSWKVsMj91AHLikdqvdQ7nIn1uFDRdJPLMwWDJfXQvC1WqExQsPFllKp938au1-0MbM4"/>
+<!-- Overlay Gradient for depth -->
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/50"></div>
+<div class="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background/50"></div>
+</div>
+<!-- HUD Elements Container -->
+<div class="absolute inset-0 z-10 p-margin pointer-events-none flex flex-col justify-between">
+<!-- Top HUD Row -->
+<div class="flex justify-between items-start">
+<!-- Target Info -->
+<div class="bg-surface-container/40 backdrop-blur-xl border border-white/10 p-hud-padding hud-border hud-border-top-left pointer-events-auto">
+<div class="font-label-caps text-label-caps text-tertiary mb-1">TARGET CLASSIFICATION</div>
+<div class="font-data-mono text-data-mono text-on-surface">SUPERMASSIVE BLACK HOLE</div>
+<div class="text-xs text-outline mt-1 font-mono">ID: M87* // NGC 4486</div>
+</div>
+<!-- Display Toggles -->
+<div class="bg-surface-container/40 backdrop-blur-xl border border-white/10 p-2 flex gap-2 pointer-events-auto">
+<button class="px-4 py-2 border border-primary/50 text-primary font-label-caps text-label-caps hover:bg-primary/10 transition-colors drop-shadow-[0_0_5px_rgba(184,195,255,0.5)]">PHYSICAL MODEL</button>
+<button class="px-4 py-2 border border-white/20 text-on-surface-variant font-label-caps text-label-caps hover:border-white/50 transition-colors">VISUAL SIM</button>
+</div>
+</div>
+<!-- Center Reticle (Decorative) -->
+<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center opacity-40">
+<div class="w-[400px] h-[400px] rounded-full border-[0.5px] border-tertiary/30 border-dashed animate-[spin_60s_linear_infinite]"></div>
+<div class="absolute w-[300px] h-[300px] rounded-full border border-primary/20"></div>
+<div class="absolute w-[2px] h-32 bg-primary/40 -top-16"></div>
+<div class="absolute w-[2px] h-32 bg-primary/40 -bottom-16"></div>
+<div class="absolute w-32 h-[2px] bg-primary/40 -left-16"></div>
+<div class="absolute w-32 h-[2px] bg-primary/40 -right-16"></div>
+</div>
+<!-- Bottom HUD Row - Readouts -->
+<div class="grid grid-cols-3 gap-gutter pointer-events-auto">
+<!-- Readout 1 -->
+<div class="bg-surface-container/60 backdrop-blur-md border border-white/10 p-hud-padding hud-border hud-border-bottom-right">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="radio_button_checked">radio_button_checked</span>
+<span class="font-label-caps text-label-caps text-tertiary">EVENT HORIZON (R_s)</span>
+</div>
+<div class="font-data-mono text-data-mono text-on-surface text-xl">1.9 × 10<sup class="text-xs">10</sup> km</div>
+<div class="w-full h-1 bg-surface-highest mt-2 relative">
+<div class="absolute top-0 left-0 h-full w-[85%] bg-tertiary"></div>
+</div>
+</div>
+<!-- Readout 2 -->
+<div class="bg-surface-container/60 backdrop-blur-md border border-white/10 p-hud-padding hud-border hud-border-bottom-right">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="blur_on">blur_on</span>
+<span class="font-label-caps text-label-caps text-primary">PHOTON SPHERE</span>
+</div>
+<div class="font-data-mono text-data-mono text-on-surface text-xl">2.85 × 10<sup class="text-xs">10</sup> km</div>
+<div class="w-full h-1 bg-surface-highest mt-2 relative">
+<div class="absolute top-0 left-0 h-full w-[60%] bg-primary"></div>
+</div>
+</div>
+<!-- Readout 3 -->
+<div class="bg-surface-container/60 backdrop-blur-md border border-white/10 p-hud-padding hud-border hud-border-bottom-right relative">
+<div class="absolute top-2 right-2 px-1 border border-error text-error text-[8px] font-mono uppercase bg-error/10">Est. Variance</div>
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="scale">scale</span>
+<span class="font-label-caps text-label-caps text-tertiary">MASS ESTIMATE</span>
+</div>
+<div class="font-data-mono text-data-mono text-on-surface text-xl">6.5 × 10<sup class="text-xs">9</sup> M<sub class="text-xs">☉</sub></div>
+<div class="w-full h-1 bg-surface-highest mt-2 relative">
+<div class="absolute top-0 left-0 h-full w-[95%] bg-tertiary opacity-70"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full px-12 py-10 flex flex-col md:flex-row justify-between items-center gap-4 mt-auto bg-[#050505] border-t border-white/5 relative z-50">
+<div class="font-serif text-lg font-light tracking-tighter text-blue-500">COSMICWEB</div>
+<div class="font-serif tracking-widest uppercase text-[10px] text-blue-600 dark:text-blue-400">© 2024 COSMICWEB RESEARCH LABS. SYSTEM READY. DATA SYNCHRONIZED.</div>
+<div class="flex gap-6">
+<a class="font-serif tracking-widest uppercase text-[10px] text-white/30 hover:text-blue-400 transition-colors cursor-pointer" href="#">Quantum Protocol</a>
+<a class="font-serif tracking-widest uppercase text-[10px] text-white/30 hover:text-blue-400 transition-colors cursor-pointer" href="#">Support</a>
+<a class="font-serif tracking-widest uppercase text-[10px] text-white/30 hover:text-blue-400 transition-colors cursor-pointer" href="#">System Status</a>
+</div>
+</footer>
+</body></html>

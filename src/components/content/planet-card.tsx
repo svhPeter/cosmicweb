@@ -27,6 +27,7 @@ export function PlanetCard({ body }: { body: CelestialBody }) {
           </div>
           <div className="pt-0.5">
             <PlanetVisual
+              bodyId={body.id}
               colorHex={body.render.colorHex}
               ringed={body.render.ringed}
               size="md"

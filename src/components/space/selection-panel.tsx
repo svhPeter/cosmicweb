@@ -18,8 +18,16 @@ import { useExploreStore } from "@/store/explore-store";
 import { PlanetVisual } from "@/components/content/planet-visual";
 import { formatNumber } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { orbitalSpeedKmS } from "@/lib/space/speeds";
 import { cn } from "@/lib/utils";
+import {
+  DEEP_SKY_CATALOG,
+  KIND_LABEL,
+  formatDistance,
+  distanceTier,
+  TIER_LABEL,
+} from "@/lib/space/deep-sky-catalog";
 
 const PAD = 10;
 const BOTTOM_SHEET_ABOVE_CONTROLS = "calc(0.4rem + 5.5rem + env(safe-area-inset-bottom, 0px))";
@@ -51,9 +59,16 @@ export function SelectionPanel() {
   const setSelected = useExploreStore((s) => s.setSelected);
   const clearPanelOnly = () => setSelected(null);
 
+  const selectedSceneId = useExploreStore((s) => s.selectedSceneObjectId);
+  const setSelectedSceneObject = useExploreStore((s) => s.setSelectedSceneObject);
+  const clearScenePanelOnly = () => setSelectedSceneObject(null);
+
   const isDesktop = useMinWidthSm();
 
   const body = selectedId ? bodies.find((b) => b.id === selectedId) : null;
+  const sceneObject = selectedSceneId
+    ? DEEP_SKY_CATALOG.find((e) => e.id === selectedSceneId) ?? null
+    : null;
 
   const [drag, setDrag] = useState({ x: 0, y: 0 });
   const dragRef = useRef(drag);
@@ -102,6 +117,7 @@ export function SelectionPanel() {
     if (!isDesktop) return;
     if (e.button !== 0) return;
     e.stopPropagation();
+    e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     dragging.current = true;
     const c = dragRef.current;
@@ -110,11 +126,13 @@ export function SelectionPanel() {
   const onHandleMove = (e: React.PointerEvent) => {
     if (!isDesktop || !dragging.current || !pointer.current) return;
     e.stopPropagation();
+    e.preventDefault();
     const p = pointer.current;
     setDrag({ x: p.origX + (e.clientX - p.startX), y: p.origY + (e.clientY - p.startY) });
   };
   const onHandleUp = (e: React.PointerEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     dragging.current = false;
     pointer.current = null;
     requestAnimationFrame(() => nudgeInViewport());
@@ -149,22 +167,21 @@ export function SelectionPanel() {
 
   return (
     <AnimatePresence mode="wait">
-      {body ? (
+      {body || sceneObject ? (
         <motion.aside
-          key={body.id}
+          key={body?.id ?? sceneObject!.id}
           role="dialog"
-          aria-label={`${body.name} — inspection`}
+          aria-label={`${body?.name ?? sceneObject!.name} — inspection`}
           initial={{ opacity: 0, y: 14, scale: 0.99 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 12, scale: 0.99 }}
           transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           className={cn(
-            "pointer-events-auto fixed z-[100] flex min-h-0 flex-col overflow-hidden",
-            "w-full sm:w-[min(22rem,calc(100vw-1.5rem))] sm:max-w-[22rem] sm:rounded-2xl",
-            "max-sm:max-h-[min(40dvh,320px)] max-sm:rounded-t-2xl max-sm:border-b-0",
-            "sm:max-h-[min(64dvh,32rem)]",
-            "border border-border/50 bg-background/80 shadow-2xl",
-            "backdrop-blur-2xl ring-1 ring-white/[0.07]"
+            "pointer-events-auto fixed z-[100] flex min-h-0 flex-col",
+            // Desktop: premium floating inspector (never full-width).
+            "sm:w-[min(26rem,calc(100vw-1.5rem))] sm:max-w-[26rem] sm:max-h-[70vh]",
+            // Mobile: bottom sheet above controls.
+            "max-sm:w-full max-sm:max-h-[min(60dvh,520px)]"
           )}
           style={
             isDesktop
@@ -190,47 +207,104 @@ export function SelectionPanel() {
             style={isDesktop ? { transform: `translate3d(${drag.x}px,${drag.y}px,0)` } : undefined}
             className="flex h-full w-full min-h-0 min-w-0 max-w-full flex-1 flex-col"
           >
-            {isDesktop ? (
-              <CardHeaderDraggable
-                onClose={clearPanelOnly}
-                onHandlePointerDown={onHandleDown}
-                onHandlePointerMove={onHandleMove}
-                onHandlePointerUp={onHandleUp}
-              />
-            ) : (
-              <div className="flex justify-end border-b border-border/25 px-2 py-1">
-                <button
-                  type="button"
-                  onClick={clearPanelOnly}
-                  aria-label="Hide details"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground touch-manipulation hover:text-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-            <div
+            <Card
+              variant="hud"
               className={cn(
-                "min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y",
-                isDesktop ? "px-4 py-1 pb-4" : "px-3 pt-0 pb-3 [padding-bottom:max(0.5rem,env(safe-area-inset-bottom,0.25rem))]"
+                "flex min-h-0 flex-1 flex-col rounded-2xl",
+                !isDesktop ? "rounded-b-xl" : ""
               )}
             >
-              {!isDesktop ? (
-                <div className="mb-1 flex justify-center sm:hidden" aria-hidden>
-                  <div className="h-1 w-10 rounded-full bg-border/55" />
+              {isDesktop ? (
+                <CardHeaderDraggable
+                  onClose={body ? clearPanelOnly : clearScenePanelOnly}
+                  onHandlePointerDown={onHandleDown}
+                  onHandlePointerMove={onHandleMove}
+                  onHandlePointerUp={onHandleUp}
+                />
+              ) : (
+                <div className="flex items-center justify-between border-b border-border/25 px-2 py-1.5">
+                  <div className="flex flex-1 justify-center" aria-hidden>
+                    <div className="h-1 w-10 rounded-full bg-border/55" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={body ? clearPanelOnly : clearScenePanelOnly}
+                    aria-label="Hide details"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground touch-manipulation hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-              ) : null}
-              <CardBody
-                body={body}
-                navigable={navigable}
-                setSelected={setSelected}
-                compact={!isDesktop}
-              />
-            </div>
+              )}
+
+              <div
+                className={cn(
+                  "min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y",
+                  isDesktop
+                    ? "px-4 py-2 pb-4"
+                    : "px-3 pt-2 pb-3 [padding-bottom:max(0.5rem,env(safe-area-inset-bottom,0.25rem))]"
+                )}
+              >
+                {body ? (
+                  <CardBody
+                    body={body}
+                    navigable={navigable}
+                    setSelected={setSelected}
+                    compact={!isDesktop}
+                  />
+                ) : sceneObject ? (
+                  <DeepSkyBody entry={sceneObject} compact={!isDesktop} />
+                ) : null}
+              </div>
+            </Card>
           </div>
         </motion.aside>
       ) : null}
     </AnimatePresence>
+  );
+}
+
+function DeepSkyBody({ entry, compact }: { entry: (typeof DEEP_SKY_CATALOG)[number]; compact: boolean }) {
+  const tier = distanceTier(entry.distanceLy);
+  const deepLink = entry.id === "milky_way_core" ? { href: "/black-hole", label: "Explore this concept" } : null;
+
+  return (
+    <div className="w-full min-w-0 max-w-full">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <Badge tone="accent-2" treatment="instrument" className="mb-2">
+            {KIND_LABEL[entry.kind].toUpperCase()}
+          </Badge>
+          <h2 className={cn("font-display leading-tight tracking-tight", compact ? "text-base" : "text-xl sm:text-2xl")}>
+            {entry.name}
+          </h2>
+          <p className={cn("mt-1 text-muted-foreground text-pretty", compact ? "text-xs leading-snug" : "text-sm leading-relaxed")}>
+            {entry.significance}
+          </p>
+        </div>
+      </div>
+
+      <dl className={cn("mt-3 grid gap-x-3 gap-y-2.5", compact ? "grid-cols-2" : "grid-cols-3")}>
+        <Stat label="Designation" value={entry.designation} />
+        <Stat label="Distance" value={formatDistance(entry.distanceLy)} />
+        <Stat label="Scale tier" value={TIER_LABEL[tier]} />
+      </dl>
+
+      {deepLink ? (
+        <div className="mt-3">
+          <Link
+            href={deepLink.href}
+            className="cosmos-chip inline-flex min-h-11 items-center gap-1.5 px-4 py-2 hover:text-foreground"
+          >
+            {deepLink.label} <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      ) : null}
+
+      <p className="mt-3 text-[10px] leading-normal text-muted-foreground/80">
+        Deep-sky objects are inspected in place — the camera does not travel to extreme distances.
+      </p>
+    </div>
   );
 }
 
@@ -312,7 +386,7 @@ function CardBody({
       <div className="w-full min-w-0 max-w-full">
         <div className="mb-1.5 flex min-w-0 items-start justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-start gap-2.5">
-            <PlanetVisual colorHex={body.render.colorHex} ringed={body.render.ringed} size="md" glow />
+            <PlanetVisual bodyId={body.id} colorHex={body.render.colorHex} ringed={body.render.ringed} size="md" glow />
             <div className="min-w-0 flex-1 pr-0.5">
               <Badge tone="accent" className="mb-0.5">
                 {typeBadgeLabel(body.type)}
@@ -335,7 +409,7 @@ function CardBody({
   return (
     <div className="w-full min-w-0 max-w-full">
       <div className="mb-1 flex min-w-0 items-start gap-2.5">
-        <PlanetVisual colorHex={body.render.colorHex} ringed={body.render.ringed} size="md" glow />
+        <PlanetVisual bodyId={body.id} colorHex={body.render.colorHex} ringed={body.render.ringed} size="md" glow />
         <div className="min-w-0 flex-1">
           <Badge tone="accent" className="mb-0.5">
             {typeBadgeLabel(body.type)}
@@ -494,10 +568,10 @@ function FooterBlock({
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[9px] leading-tight text-muted-foreground/90 [font-variant:small-caps] tracking-wider sm:tracking-widest">
+      <dt className="cosmos-label-caps leading-tight">
         {label}
       </dt>
-      <dd className="mt-0.5 break-words text-sm font-medium leading-snug text-foreground/95 tabular-nums">{value}</dd>
+      <dd className="cosmos-data mt-1 break-words text-sm leading-snug">{value}</dd>
     </div>
   );
 }

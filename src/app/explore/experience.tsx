@@ -82,39 +82,26 @@ export default function Experience() {
                 <ExploreHud onToggleSidebar={() => setSidebarOpen((v) => !v)} sidebarOpen={sidebarOpen} />
               </div>
 
-              {/* Tablet/desktop sidebar — list stays visible for solar-system wayfinding. */}
-              <div
-                className={[
-                  "pointer-events-none absolute left-4 top-[5.5rem] z-30 hidden md:top-24 md:block md:pl-1 transition-opacity duration-700",
-                  introActive ? "opacity-0" : "opacity-100",
-                ].join(" ")}
-              >
-                <ExploreSidebar />
-              </div>
-
-              {/* Mobile/tablet backdrop scrim — tap-outside closes the drawer.
-                  Soft blur so the scene remains emotionally present behind
-                  the list, rather than feeling like a modal that "opens" on
-                  top of content. */}
+              {/* Backdrop — tap/click outside closes; lighter on large screens. */}
               <button
                 type="button"
                 aria-hidden={!sidebarOpen}
                 tabIndex={-1}
                 onClick={closeSidebar}
                 className={[
-                  "absolute inset-0 z-20 bg-background/30 backdrop-blur-[2px] md:hidden transition-opacity duration-300",
+                  "absolute inset-0 z-20 bg-background/30 backdrop-blur-[2px] transition-opacity duration-300 md:bg-background/20",
                   sidebarOpen
                     ? "pointer-events-auto opacity-100"
                     : "pointer-events-none opacity-0",
                 ].join(" ")}
               />
 
-              {/* Mobile/tablet sidebar: toggled drawer from the left */}
+              {/* Body list — one drawer; same minimize behavior on all breakpoints. */}
               <div
                 className={[
-                  "absolute z-30 transition-all duration-300 md:hidden",
-                  "left-[max(1rem,env(safe-area-inset-left))]",
-                  "top-[max(5.25rem,calc(env(safe-area-inset-top)+4.75rem))]",
+                  "absolute z-30 transition-all duration-300 pl-1",
+                  "left-[max(1rem,env(safe-area-inset-left))] md:left-4",
+                  "top-[max(5.25rem,calc(env(safe-area-inset-top)+4.75rem))] md:top-24",
                   introActive ? "opacity-0 pointer-events-none" : "",
                   sidebarOpen
                     ? "translate-x-0 opacity-100 pointer-events-auto"
@@ -125,17 +112,15 @@ export default function Experience() {
                 <ExploreSidebar />
               </div>
 
-              {/* Mobile sidebar toggle button — safe-area-aware so it
-                  doesn't collide with notches / status bars. */}
               <button
                 type="button"
                 onClick={() => setSidebarOpen((v) => !v)}
                 aria-label={sidebarOpen ? "Hide body list" : "Show body list"}
                 aria-expanded={sidebarOpen}
                 className={[
-                  "pointer-events-auto absolute z-40 inline-flex h-10 w-10 items-center justify-center rounded-full cosmos-panel md:hidden transition-opacity duration-700",
-                  "left-[max(1rem,env(safe-area-inset-left))]",
-                  "top-[max(5.25rem,calc(env(safe-area-inset-top)+4.75rem))]",
+                  "pointer-events-auto absolute z-40 inline-flex h-10 w-10 items-center justify-center rounded-full cosmos-panel transition-opacity duration-700",
+                  "left-[max(1rem,env(safe-area-inset-left))] md:left-4",
+                  "top-[max(5.25rem,calc(env(safe-area-inset-top)+4.75rem))] md:top-24",
                   introActive ? "opacity-0 pointer-events-none" : "opacity-100",
                 ].join(" ")}
               >

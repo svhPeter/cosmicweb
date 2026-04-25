@@ -80,7 +80,7 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
     let cancelled = false;
     const loader = new USDZLoader();
     loader
-      .loadAsync("/models/sun/Sun_1_1391000.usdz")
+      .loadAsync("/textures/sun/Sun_1_1391000.usdz")
       .then((g) => {
         if (cancelled) return;
         // Normalize scale to match our Sun radius (model is arbitrary units).

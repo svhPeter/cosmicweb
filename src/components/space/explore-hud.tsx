@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronLeft, Sparkles, CircleDot, Infinity as InfinityIcon } from "lucide-react";
 
 import { useExploreStore } from "@/store/explore-store";
 import { bodies } from "@/data-static/bodies";
@@ -23,6 +24,16 @@ interface ExploreHudProps {
 }
 
 export function ExploreHud(_props: ExploreHudProps = {}) {
+  // Concept deep-link chips are revealed after 10s in the scene — long
+  // enough that the user has already settled in and the Solar System is
+  // the first thing they see, short enough that they discover the deeper
+  // concept routes without having to go back to the home page.
+  const [conceptsRevealed, setConceptsRevealed] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setConceptsRevealed(true), 10_000);
+    return () => window.clearTimeout(t);
+  }, []);
+
   const focusedId = useExploreStore((s) => s.focusedBodyId);
   const selectedId = useExploreStore((s) => s.selectedBodyId);
   const setSelected = useExploreStore((s) => s.setSelected);
@@ -155,6 +166,36 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
         ].join(" ")}
       >
         <TimeControlBar className="pointer-events-auto" />
+
+        {/* Concept deep-link chips. Hidden for the first 10s to keep the
+            first impression calm; fade in once the user has spent time
+            in the scene. Tap-through is only on these two chips; the
+            surrounding row stays inert. */}
+        <div
+          className={[
+            "pointer-events-none flex flex-wrap items-center justify-center gap-2 transition-opacity duration-700",
+            conceptsRevealed ? "opacity-100" : "opacity-0",
+          ].join(" ")}
+          aria-hidden={!conceptsRevealed}
+        >
+          <Link
+            href="/black-hole"
+            tabIndex={conceptsRevealed ? 0 : -1}
+            className="pointer-events-auto cosmos-chip inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+          >
+            <CircleDot className="h-3 w-3 text-accent" aria-hidden />
+            <span>Approach the black hole</span>
+          </Link>
+          <Link
+            href="/wormhole"
+            tabIndex={conceptsRevealed ? 0 : -1}
+            className="pointer-events-auto cosmos-chip inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+          >
+            <InfinityIcon className="h-3 w-3 text-accent" aria-hidden />
+            <span>Enter a wormhole</span>
+          </Link>
+        </div>
+
         <p className="hidden px-4 text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 sm:block sm:text-[11px] sm:tracking-[0.22em]">
           {galactic ? (
             <>Planets orbit the Sun · the Sun drifts through the galaxy · trails reveal the helix</>

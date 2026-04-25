@@ -20,6 +20,24 @@ import { Mercury } from "@/components/space/mercury";
 import { Venus } from "@/components/space/venus";
 import { Pluto } from "@/components/space/pluto";
 
+/**
+ * Bodies that ship their own custom shader renderer. Used to suppress
+ * the fallback `meshStandardMaterial` sphere for these ids — no duplicate
+ * geometry in the scene graph, no raycaster cross-talk with the custom
+ * renderer's pointer handlers.
+ */
+const HAS_CUSTOM_RENDERER: ReadonlySet<string> = new Set([
+  "earth",
+  "mars",
+  "jupiter",
+  "saturn",
+  "uranus",
+  "neptune",
+  "venus",
+  "mercury",
+  "pluto",
+]);
+
 interface PlanetProps {
   body: CelestialBody;
   /** Stylised mode — orbit radius in scene units. */
@@ -61,7 +79,18 @@ export function Planet({
   // hardcoded to the origin — correct only when the heliocentric frame
   // itself was at the origin. We now mirror the Sun's reported world
   // position each frame so lighting stays correct under galactic drift.
-  const sunWorld = useMemo(() => new THREE.Vector3(0, 0, 0), []);
+  //
+  // Seed from the registry at mount so the first frame sees a sensible
+  // value instead of (0,0,0) — child shaders (Earth, Mars, …) read it
+  // inside their own useFrame, which can run before this component's
+  // useFrame on the first tick, making the initial frame otherwise
+  // paint with Sun at origin and produce a visible NaN flicker.
+  const sunWorld = useMemo(() => {
+    const v = new THREE.Vector3();
+    const registered = bodyPositions.get("sun");
+    if (registered) v.copy(registered);
+    return v;
+  }, []);
 
   const speed = useExploreStore((s) => s.speed);
   const playing = useExploreStore((s) => s.playing);
@@ -82,7 +111,17 @@ export function Planet({
   }, []);
 
   useFrame((_, delta) => {
-    if (!groupRef.current || !meshRef.current) return;
+    // `meshRef` is only mounted for bodies without a custom renderer, so
+    // it's intentionally absent for Earth, Mars, Jupiter, etc. Only the
+    // group must exist for position updates to run.
+    if (!groupRef.current) return;
+
+    // Sync the sun-world vector FIRST so children's useFrame (e.g. Earth's
+    // shader uniform update) reads the freshest value this tick instead
+    // of last tick's — otherwise custom planet shaders lag by one frame
+    // during galactic drift, visible as a tiny shimmer at the terminator.
+    const sunPos = bodyPositions.get("sun");
+    if (sunPos) sunWorld.copy(sunPos);
 
     // Advance simulation clock — centralised in the store is unnecessary
     // per-frame overhead. We use `playing` + `speed` for local motion and
@@ -114,18 +153,12 @@ export function Planet({
       );
     }
 
-    // Default axial rotation for non-flagship planets.
-    meshRef.current.rotation.y += delta * 0.3;
+    // Default axial rotation for non-flagship planets (fallback mesh only).
+    if (meshRef.current) meshRef.current.rotation.y += delta * 0.3;
 
     // Report world position to the camera controller.
     groupRef.current.getWorldPosition(worldPos.current);
     reportBodyPosition(body.id, worldPos.current);
-
-    // Mirror the Sun's reported world position into the shader-bound
-    // vector so planet lighting stays correct even when the whole
-    // heliocentric frame is drifting through space.
-    const sunPos = bodyPositions.get("sun");
-    if (sunPos) sunWorld.copy(sunPos);
   });
 
   const bandColor = body.render.bandHex ?? body.render.colorHex;
@@ -326,43 +359,42 @@ export function Planet({
         </group>
       ) : null}
 
-      <mesh
-        ref={meshRef}
-        quaternion={eclipticTilt}
-        onPointerOver={(e) => {
-          e.stopPropagation();
-          useExploreStore.getState().setHovered(body.id);
-          document.body.style.cursor = "pointer";
-        }}
-        onPointerOut={() => {
-          useExploreStore.getState().setHovered(null);
-          document.body.style.cursor = "";
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          useExploreStore.getState().setSelected(body.id);
-        }}
-        visible={
-          body.id !== "earth" &&
-          body.id !== "saturn" &&
-          body.id !== "mars" &&
-          body.id !== "jupiter" &&
-          body.id !== "uranus" &&
-          body.id !== "neptune" &&
-          body.id !== "mercury" &&
-          body.id !== "venus" &&
-          body.id !== "pluto"
-        }
-      >
-        <sphereGeometry args={[size, 48, 48]} />
-        <meshStandardMaterial
-          color={body.render.colorHex}
-          roughness={0.90}
-          metalness={0.04}
-          emissive={bandColor}
-          emissiveIntensity={0.035}
-        />
-      </mesh>
+      {/* Fallback sphere for bodies without a custom shader renderer.
+          Previously this was always rendered with `visible={false}` for
+          the ones that *do* have a custom renderer — invisible meshes
+          still participate in raycasting in react-three-fiber, which
+          cross-talked with the custom renderer's own hover handlers and
+          caused the selection/hover ring to flicker in/out as the
+          pointer crossed mesh boundaries. Rendering it conditionally
+          keeps the scene graph tight and removes the duplicate hit. */}
+      {!HAS_CUSTOM_RENDERER.has(body.id) && (
+        <mesh
+          ref={meshRef}
+          quaternion={eclipticTilt}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            useExploreStore.getState().setHovered(body.id);
+            document.body.style.cursor = "pointer";
+          }}
+          onPointerOut={() => {
+            useExploreStore.getState().setHovered(null);
+            document.body.style.cursor = "";
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            useExploreStore.getState().setSelected(body.id);
+          }}
+        >
+          <sphereGeometry args={[size, 48, 48]} />
+          <meshStandardMaterial
+            color={body.render.colorHex}
+            roughness={0.9}
+            metalness={0.04}
+            emissive={bandColor}
+            emissiveIntensity={0.035}
+          />
+        </mesh>
+      )}
 
       {body.render.ringed && body.id !== "saturn" && body.id !== "jupiter" ? (
         <SaturnRings size={size} innerColor={ringInner} outerColor={ringOuter} />

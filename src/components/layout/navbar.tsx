@@ -75,7 +75,7 @@ export function Navbar() {
             aria-expanded={open}
             aria-controls="mobile-nav"
             aria-label="Toggle navigation"
-            className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-full border border-border hover:bg-white/5"
+            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full border border-border hover:bg-white/5"
             onClick={() => setOpen((v) => !v)}
           >
             <span className="sr-only">Menu</span>

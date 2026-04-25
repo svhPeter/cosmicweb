@@ -11,6 +11,7 @@ export const site = {
 export const navigation = [
   { href: "/explore", label: "Explore" },
   { href: "/planets", label: "Planets" },
+  { href: "/concepts", label: "Concepts" },
   { href: "/compare", label: "Compare" },
   { href: "/today", label: "Today" },
   { href: "/about", label: "About" },
@@ -22,6 +23,10 @@ export const footerLinks = [
     links: [
       { href: "/explore", label: "3D Solar System" },
       { href: "/planets", label: "Planets" },
+      { href: "/concepts", label: "Concepts" },
+      { href: "/black-hole", label: "Black hole" },
+      { href: "/wormhole", label: "Wormhole" },
+      { href: "/neutron-star", label: "Neutron star" },
       { href: "/compare", label: "Compare" },
       { href: "/today", label: "Today in Space" },
     ],

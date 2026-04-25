@@ -48,6 +48,33 @@
     /* Tap highlight in the brand accent instead of browser default blue. */
     -webkit-tap-highlight-color: hsl(var(--accent) / 0.2);
     overflow-x: hidden;
+    /* Stops chain-scroll from bubbling up into the URL bar / pull-to-
+       refresh when a panel scrolls to its edge on mobile — touch feels
+       locked to the thing under the finger. */
+    overscroll-behavior-y: none;
+  }
+
+  /* Buttons, icon buttons, and chip-shaped controls act as HUD affordances,
+     not copy. Double-tap-to-zoom and accidental text selection both make
+     the UI feel breakable on phones, so we suppress them globally while
+     leaving prose fully selectable. */
+  button,
+  [role="button"],
+  a.cosmos-chip,
+  .cosmos-chip,
+  .cosmos-kbd {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+  }
+
+  /* Three.js canvases and scene wrappers: the finger must drive the
+     camera, never the page scroll. Tailwind doesn't ship `touch-none` by
+     default in older setups, so we also hard-lock the raw element here
+     so it keeps working through hydration and HMR. */
+  canvas {
+    touch-action: none;
   }
 
   h1, h2, h3, h4 {
@@ -81,6 +108,7 @@
       transition-duration: 0.001ms !important;
     }
   }
+
 }
 
 @layer components {
@@ -153,6 +181,78 @@
     -webkit-backdrop-filter: blur(10px) saturate(140%);
   }
 
+  /* Styled range slider used by the cinematic timeline controller.
+     Thin accent-tinted track, soft glowing thumb. Sized the same on
+     desktop and mobile so touch targets stay friendly without visual
+     weight. Keyboard focus gets a full accent ring so Tab navigation
+     is legible. */
+  .cosmos-range {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 24px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .cosmos-range:focus {
+    outline: none;
+  }
+  .cosmos-range::-webkit-slider-runnable-track {
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      hsl(190 96% 62% / 0.6) 0%,
+      hsl(190 96% 62% / 0.6) var(--progress, 0%),
+      hsl(var(--border)) var(--progress, 0%),
+      hsl(var(--border)) 100%
+    );
+  }
+  .cosmos-range::-moz-range-track {
+    height: 3px;
+    border-radius: 999px;
+    background: hsl(var(--border));
+  }
+  .cosmos-range::-moz-range-progress {
+    height: 3px;
+    border-radius: 999px;
+    background: hsl(190 96% 62% / 0.6);
+  }
+  .cosmos-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    margin-top: -7px;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: hsl(190 96% 82%);
+    border: 2px solid hsl(var(--background));
+    box-shadow: 0 0 8px hsl(190 96% 62% / 0.6), 0 1px 2px hsl(225 35% 4% / 0.6);
+    transition: transform 160ms ease;
+  }
+  .cosmos-range::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: hsl(190 96% 82%);
+    border: 2px solid hsl(var(--background));
+    box-shadow: 0 0 8px hsl(190 96% 62% / 0.6), 0 1px 2px hsl(225 35% 4% / 0.6);
+    transition: transform 160ms ease;
+  }
+  .cosmos-range:hover::-webkit-slider-thumb,
+  .cosmos-range:focus::-webkit-slider-thumb {
+    transform: scale(1.1);
+  }
+  .cosmos-range:hover::-moz-range-thumb,
+  .cosmos-range:focus::-moz-range-thumb {
+    transform: scale(1.1);
+  }
+  .cosmos-range:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px hsl(190 96% 62% / 0.25), 0 0 12px hsl(190 96% 62% / 0.7);
+  }
+  .cosmos-range:focus::-moz-range-thumb {
+    box-shadow: 0 0 0 4px hsl(190 96% 62% / 0.25), 0 0 12px hsl(190 96% 62% / 0.7);
+  }
+
   /* Editorial rhythm tokens — standardised vertical spacing between major
      sections across the product. Keeps rhythm consistent without scattering
      magic numbers through pages. */
@@ -175,5 +275,28 @@
   }
   .bg-noise {
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1  0 0 0 0 0.1  0 0 0 0 0.15  0 0 0 0.35 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  /* Concept experiences: fade the 3D canvas in once the shader has had
+     a frame or two to compile, so the transition from the loading
+     skeleton to the scene reads as a deliberate reveal rather than a
+     hard cut. Matches the editorial pacing of the surrounding prose. */
+  @keyframes cosmos-scene-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .cosmos-scene-in {
+    animation: cosmos-scene-in 700ms ease-out both;
+  }
+
+  /* Shared skeleton pulse used by all three concept loaders while the
+     shader compiles. Gentle — we want "alive, thinking" not "loading
+     spinner". */
+  @keyframes cosmos-skeleton-pulse {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 0.9; }
+  }
+  .cosmos-skeleton-pulse {
+    animation: cosmos-skeleton-pulse 2600ms ease-in-out infinite;
   }
 }

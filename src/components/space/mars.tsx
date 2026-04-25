@@ -146,7 +146,10 @@ function makeMarsMaterial(sunWorld: THREE.Vector3, albedo: THREE.Texture): MarsM
 
       void main() {
         vec3 n = normalize(vWorldNormal);
-        vec3 l = normalize(uSunWorld - vWorldPos);
+        // NaN-safe sun direction — guards against first-frame overlap where
+        // sun and fragment share (0,0,0), which produces NaN colour.
+        vec3 sunDir = uSunWorld - vWorldPos;
+        vec3 l = length(sunDir) > 1e-4 ? normalize(sunDir) : vec3(0.0, 1.0, 0.0);
         vec3 v = normalize(cameraPosition - vWorldPos);
 
         float ndl = clamp(dot(n, l), 0.0, 1.0);

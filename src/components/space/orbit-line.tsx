@@ -187,6 +187,23 @@ export function OrbitLine({
     }
     // Keep overview readability strong even with a textured background.
     target *= 0.58 + 0.42 * closeFade;
+
+    // When the camera sits very close to the *focused* body, its own
+    // orbit ring visually cuts across the planet body (the ring passes
+    // near-and-far around the planet's position on it), which reads as
+    // a distracting slash across the globe. Fade the ring down to a
+    // whisper at point-blank range — re-emerges as the user pulls back.
+    if (isFocused) {
+      const bodyPos = bodyPositions.get(bodyId);
+      if (bodyPos) {
+        const distToBody = camera.position.distanceTo(bodyPos);
+        // Body radius in scene units is ~1 (visual scale), so a cam
+        // distance of ~4 is the default focused framing. Fade starts
+        // below 6, fully dimmed by 3.
+        const nearFade = THREE.MathUtils.clamp((distToBody - 3) / 3, 0, 1);
+        target *= 0.15 + 0.85 * nearFade;
+      }
+    }
     // Heliocentric-only construct: orbit rings are a Sun-centric abstraction
     // and don't describe the helix we see in the galactic frame. Fade them
     // out as the reveal animates toward the galactic frame.

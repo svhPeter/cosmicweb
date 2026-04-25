@@ -3,6 +3,13 @@ import type { Config } from "tailwindcss";
 const config: Config = {
   darkMode: "class",
   content: ["./src/**/*.{ts,tsx,mdx}"],
+  future: {
+    // Wraps every `hover:` variant in `@media (hover: hover)` so
+    // touch-only devices never hold a "sticky hover" after tap. This
+    // is Tailwind's canonical mobile-UX hardening and fixes a class of
+    // bugs where buttons look pressed until the user taps elsewhere.
+    hoverOnlyWhenSupported: true,
+  },
   theme: {
     container: {
       center: true,
@@ -42,13 +49,27 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ["var(--font-display)", "ui-serif", "Georgia", "serif"],
+        // Geometric sans display stack — Jost first, Futura (macOS) /
+        // generic geometric fallbacks after, so the cinematic voice
+        // survives if the webfont hasn't loaded yet.
+        display: [
+          "var(--font-display)",
+          "Futura",
+          "Futura PT",
+          "Trebuchet MS",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
         mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       fontSize: {
-        "display-xl": ["clamp(3.5rem, 7vw, 6.5rem)", { lineHeight: "0.98", letterSpacing: "-0.03em" }],
-        "display-lg": ["clamp(2.75rem, 5vw, 4.5rem)", { lineHeight: "1.02", letterSpacing: "-0.025em" }],
-        "display-md": ["clamp(2rem, 3.5vw, 3rem)", { lineHeight: "1.08", letterSpacing: "-0.02em" }],
+        // Geometric sans tightens visually better than a serif, so the
+        // tracking is a hair tighter at the top end (-0.035em) to push
+        // the headline into film-poster density.
+        "display-xl": ["clamp(3.5rem, 7vw, 6.5rem)", { lineHeight: "0.95", letterSpacing: "-0.035em" }],
+        "display-lg": ["clamp(2.75rem, 5vw, 4.5rem)", { lineHeight: "1.0", letterSpacing: "-0.03em" }],
+        "display-md": ["clamp(2rem, 3.5vw, 3rem)", { lineHeight: "1.06", letterSpacing: "-0.025em" }],
       },
       borderRadius: {
         sm: "6px",

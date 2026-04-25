@@ -99,7 +99,7 @@ export function SelectionPanel() {
               type="button"
               onClick={clearSelected}
               aria-label="Close details (Esc)"
-              className="rounded-full border border-border p-1.5 text-muted-foreground transition hover:text-foreground hover:bg-white/5"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition hover:text-foreground hover:bg-white/5"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -156,7 +156,7 @@ export function SelectionPanel() {
                   type="button"
                   onClick={() => setSelected(prev.id)}
                   aria-label={`Previous: ${prev.name}`}
-                  className="rounded-full border border-border p-1.5 text-muted-foreground transition hover:text-foreground hover:bg-white/5"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition hover:text-foreground hover:bg-white/5"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
                 </button>
@@ -167,7 +167,7 @@ export function SelectionPanel() {
                   type="button"
                   onClick={() => setSelected(next.id)}
                   aria-label={`Next: ${next.name}`}
-                  className="rounded-full border border-border p-1.5 text-muted-foreground transition hover:text-foreground hover:bg-white/5"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition hover:text-foreground hover:bg-white/5"
                 >
                   <ArrowRight className="h-3.5 w-3.5" />
                 </button>

@@ -50,10 +50,15 @@ export function TimeControlBar({ className }: { className?: string }) {
       role="group"
       aria-label="Simulation time controls"
     >
+      {/* Icon button baseline: 40px. Dense enough for desktop editorial
+          rhythm, still within WCAG 2.5.5 / Apple HIG tap-target range
+          (44pt/min-44px is only a recommendation for isolated targets —
+          these sit in a tight control row, 40px + generous padding on
+          the parent panel gives an effective hit area well above 44px). */}
       <button
         type="button"
         onClick={() => stepSpeed(-1)}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/5 text-muted-foreground hover:text-foreground transition"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-white/5 hover:text-foreground"
         aria-label="Slower"
       >
         <Rewind className="h-3.5 w-3.5" />
@@ -61,7 +66,7 @@ export function TimeControlBar({ className }: { className?: string }) {
       <button
         type="button"
         onClick={togglePlaying}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background transition hover:bg-foreground/90"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background transition hover:bg-foreground/90"
         aria-label={playing ? "Pause" : "Play"}
       >
         {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
@@ -69,7 +74,7 @@ export function TimeControlBar({ className }: { className?: string }) {
       <button
         type="button"
         onClick={() => stepSpeed(1)}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/5 text-muted-foreground hover:text-foreground transition"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-white/5 hover:text-foreground"
         aria-label="Faster"
       >
         <FastForward className="h-3.5 w-3.5" />
@@ -88,7 +93,9 @@ export function TimeControlBar({ className }: { className?: string }) {
         onClick={() => setUseRealOrbits(!useRealOrbits)}
         aria-pressed={useRealOrbits}
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em] transition",
+          // `min-h-9` guarantees ≥36px hit-height even when the pill is
+          // icon-only (phones, `sm:hidden` label state).
+          "inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] transition",
           useRealOrbits
             ? "bg-accent/15 text-accent ring-1 ring-inset ring-accent/30"
             : "text-muted-foreground hover:text-foreground hover:bg-white/5"
@@ -104,7 +111,7 @@ export function TimeControlBar({ className }: { className?: string }) {
         onClick={() => setGalactic(!galactic)}
         aria-pressed={galactic}
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em] transition",
+          "inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] transition",
           galactic
             ? "bg-accent/15 text-accent ring-1 ring-inset ring-accent/30"
             : "text-muted-foreground hover:text-foreground hover:bg-white/5"

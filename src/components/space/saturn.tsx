@@ -232,7 +232,9 @@ function makeSaturnBodyMaterial({
 
       void main() {
         vec3 n = normalize(vWorldNormal);
-        vec3 l = normalize(uSunWorld - vWorldPos);
+        // NaN-safe sun direction (see earth.tsx for rationale).
+        vec3 sunDir = uSunWorld - vWorldPos;
+        vec3 l = length(sunDir) > 1e-4 ? normalize(sunDir) : vec3(0.0, 1.0, 0.0);
         vec3 v = normalize(cameraPosition - vWorldPos);
 
         float ndl = clamp(dot(n, l), 0.0, 1.0);
@@ -378,7 +380,9 @@ function makeSaturnRingMaterial({
         vec3 col = mix(uColorInner, uColorOuter, pow(nr, 0.9));
 
         // Lighting response: brighter on sun-facing side.
-        vec3 l = normalize(uSunWorld - vWorldPos);
+        // NaN-safe (see earth.tsx for rationale).
+        vec3 sunDir = uSunWorld - vWorldPos;
+        vec3 l = length(sunDir) > 1e-4 ? normalize(sunDir) : vec3(0.0, 1.0, 0.0);
         vec3 nrm = vec3(0.0, 1.0, 0.0); // ring plane normal in world approximated by +Y in local,
                                         // but since ring is rotated in the component, the modelMatrix already encodes it.
         // Use derivative-based normal from geometry: for a flat ring, normal is +/-.

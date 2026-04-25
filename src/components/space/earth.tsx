@@ -82,15 +82,22 @@ export function Earth({
 
   return (
     <group ref={groupRef} rotation={tilt}>
-      {/* Base globe: custom shader blends day + night, adds soft ocean glint. */}
-      <mesh ref={globeRef}>
+      {/* Base globe: custom shader blends day + night, adds soft ocean glint.
+          `renderOrder={0}` is explicit so the transparent shells above layer
+          predictably even when camera sorting flips between frames during
+          close-focus (was a source of one-frame flicker). */}
+      <mesh ref={globeRef} renderOrder={0}>
         <sphereGeometry args={[radius, 64, 64]} />
         <primitive attach="material" object={earthMat} />
       </mesh>
 
-      {/* Clouds: separate transparent shell, lit by the scene's Sun light. */}
-      <mesh ref={cloudsRef}>
-        <sphereGeometry args={[radius * 1.012, 56, 56]} />
+      {/* Clouds: separate transparent shell. Gap raised from 1.2% → 1.8% of
+          radius — close-focus (minDistance ≈ 1.3 planet radii) left the
+          depth buffer's precision band on the edge, so a tighter gap was
+          intermittently z-fighting with the globe. 1.8% is still visually
+          flush but comfortably above the precision threshold. */}
+      <mesh ref={cloudsRef} renderOrder={1}>
+        <sphereGeometry args={[radius * 1.018, 56, 56]} />
         <meshStandardMaterial
           map={clouds}
           alphaMap={clouds}
@@ -102,9 +109,10 @@ export function Earth({
         />
       </mesh>
 
-      {/* Atmosphere: cinematic rim glow strongest at edges. */}
-      <mesh>
-        <sphereGeometry args={[radius * 1.035, 56, 56]} />
+      {/* Atmosphere: cinematic rim glow strongest at edges. Rendered last
+          so its additive pass always composites over the cloud shell. */}
+      <mesh renderOrder={2}>
+        <sphereGeometry args={[radius * 1.04, 56, 56]} />
         <primitive attach="material" object={atmosphereMat} />
       </mesh>
     </group>
@@ -151,7 +159,15 @@ function makeEarthMaterial(day: THREE.Texture, night: THREE.Texture, spec: THREE
 
       void main() {
         vec3 n = normalize(vWorldNormal);
-        vec3 l = normalize(uSunWorld - vWorldPos);
+        // Defensive normalise: on the very first frame (before any useFrame
+        // has run) the Sun's world position registry can still read the
+        // default (0,0,0) while this fragment is already at the origin,
+        // which makes normalize(0) produce NaN and paints the planet
+        // with random garbage pixels for one frame -- visible as a flicker.
+        // Falling back to a fixed direction keeps the first frame painted
+        // with a predictable lighting state.
+        vec3 sunDir = uSunWorld - vWorldPos;
+        vec3 l = length(sunDir) > 1e-4 ? normalize(sunDir) : vec3(0.0, 1.0, 0.0);
         vec3 v = normalize(cameraPosition - vWorldPos);
 
         float ndl = dot(n, l);
@@ -223,7 +239,9 @@ function makeAtmosphereMaterial(color: THREE.Color, sunWorld: THREE.Vector3): At
       void main() {
         vec3 n = normalize(vWorldNormal);
         vec3 v = normalize(cameraPosition - vWorldPos);
-        vec3 l = normalize(uSunWorld - vWorldPos);
+        // NaN-safe sun direction — see earth globe shader for rationale.
+        vec3 sunDir = uSunWorld - vWorldPos;
+        vec3 l = length(sunDir) > 1e-4 ? normalize(sunDir) : vec3(0.0, 1.0, 0.0);
 
         // Rim glow: strongest at edges.
         float fres = pow(1.0 - max(dot(n, v), 0.0), 2.6);

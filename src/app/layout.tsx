@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
+import { Inter, Jost, JetBrains_Mono } from "next/font/google";
 
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -12,9 +12,16 @@ const sans = Inter({
   display: "swap",
 });
 
-const display = Instrument_Serif({
+/**
+ * Display face: Jost — an open-source geometric sans that directly
+ * revives Futura's proportions. It carries the same cinematic Nolan /
+ * Interstellar-poster voice (wide letterspacing, tall apex, monoline
+ * strokes) without needing a paid Futura licence. Loaded in the three
+ * weights we actually use for headings so the bundle stays minimal.
+ */
+const display = Jost({
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "500", "600"],
   variable: "--font-display",
   display: "swap",
 });
@@ -73,6 +80,22 @@ export const metadata: Metadata = {
   },
   robots: { index: true, follow: true },
   icons: { icon: "/favicon.svg" },
+  // Tells iOS Safari that Cosmos is web-app-capable when "Add to Home
+  // Screen" is used — status bar styling, standalone chrome, title
+  // matching the rest of the product instead of the URL bar.
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: site.name,
+  },
+  formatDetection: {
+    // Phone/email/address auto-linking turns scientific figures
+    // ("5.972e24 kg", "230 km/s") into tappable blue phone links on
+    // iOS. Disabled globally; real links stay explicit <a> tags.
+    telephone: false,
+    email: false,
+    address: false,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

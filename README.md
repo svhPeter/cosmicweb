@@ -49,7 +49,7 @@ and demos gracefully without any keys.
 
 - **Next.js 14 (App Router)** + **TypeScript** (strict, `noUncheckedIndexedAccess`)
 - **Tailwind CSS** with a custom dark-only token system (`--background`, `--panel`, `--accent`, …)
-- **Framer Motion** for UI motion, **Inter + Instrument Serif + JetBrains Mono** typography
+- **Framer Motion** for UI motion, **Inter + Jost + JetBrains Mono** typography (Jost carries the cinematic geometric-sans voice)
 - **Three.js** + **@react-three/fiber** + **@react-three/drei** for the 3D scene
 - **Zustand** for scene / simulation state
 - **Zod** for all schema validation (static data, external APIs, response envelope)
@@ -224,7 +224,7 @@ Real-orbits mode is accurate to ≈ ±1% for the major planets within a century 
 
 - Dark-only palette through CSS variables; no ad-hoc colors in components.
 - One accent color (electric cyan) with sparse, meaningful usage.
-- Typography hierarchy from two families only (Inter + Instrument Serif) plus one mono.
+- Typography hierarchy from two families only (Inter + Jost) plus one mono.
 - No neon, no sci-fi gimmick fonts, no random particle noise.
 - 3D scene respects PerformanceMonitor + AdaptiveDpr for reliability on lower-end devices.
 

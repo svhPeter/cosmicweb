@@ -99,7 +99,9 @@ function makeVenusMaterial(clouds: THREE.Texture, sunWorld: THREE.Vector3): Venu
       float sat(float x){ return clamp(x, 0.0, 1.0); }
 
       void main() {
-        vec3 sunDir = normalize(uSunWorld - vWorldPos);
+        // NaN-safe sun direction (see earth.tsx for rationale).
+        vec3 sunDelta = uSunWorld - vWorldPos;
+        vec3 sunDir = length(sunDelta) > 1e-4 ? normalize(sunDelta) : vec3(0.0, 1.0, 0.0);
         float ndl = sat(dot(vNormalW, sunDir));
 
         // Slow cloud advection to avoid \"static texture\" feel.

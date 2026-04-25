@@ -16,6 +16,8 @@ import { CameraController } from "@/components/space/camera-controller";
 import { GalacticController } from "@/components/space/galactic-controller";
 import { GalacticDust } from "@/components/space/galactic-dust";
 import { PlanetTrails } from "@/components/space/planet-trails";
+import { MotionAxis } from "@/components/space/motion-axis";
+import { PostFX } from "@/components/space/post-fx";
 import { useExploreStore } from "@/store/explore-store";
 import { useDeviceTier } from "@/lib/use-device-tier";
 
@@ -61,7 +63,12 @@ export function SolarSystemScene({
   // conservative, not aggressive.
   const tierDpr: [number, number] =
     tier === "low" ? [1, 1.35] : tier === "medium" ? [1, 1.75] : [1, 2];
-  const starfieldCount = tier === "low" ? 2000 : tier === "medium" ? 3400 : 5200;
+  // Three parallax starfield layers. Near stars are few and bright; far
+  // stars are many and dim. When the camera moves, they shift against
+  // each other at different rates → real perceived depth.
+  const starCountFar = tier === "low" ? 1400 : tier === "medium" ? 2400 : 3600;
+  const starCountMid = tier === "low" ? 700 : tier === "medium" ? 1200 : 1800;
+  const starCountNear = tier === "low" ? 0 : tier === "medium" ? 500 : 900;
 
   // One shared frame group holds the Sun, planets, and orbit rings. When
   // the galactic controller is active, this entire group translates along
@@ -78,11 +85,20 @@ export function SolarSystemScene({
       <Canvas
         shadows={false}
         dpr={dpr ?? (highPerf ? tierDpr : [1, Math.min(tierDpr[1], 1.3)])}
-        gl={{ antialias: tier !== "low", powerPreference: "high-performance" }}
-        camera={{ position: [0, 16, 34], fov: 42, near: 0.1, far: 3000 }}
+        gl={{
+          antialias: tier !== "low",
+          powerPreference: "high-performance",
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.0,
+          outputColorSpace: THREE.SRGBColorSpace,
+        }}
+        camera={{ position: [0, 16, 34], fov: 42, near: 0.1, far: 4000 }}
       >
-        <color attach="background" args={["#04060b"]} />
-        <fog attach="fog" args={["#04060b", 120, 520]} />
+        {/* The procedural SpaceEnvironment owns the sky — it sets
+            scene.background to a deep-space base color and layers shader
+            galaxies, nebulae, and motes on top. A very light exponential
+            fog keeps near objects grounded without blending the sky to black. */}
+        <fogExp2 attach="fog" args={["#04060b", 0.00045]} />
 
         <PerformanceMonitor onDecline={() => setHighPerf(false)} />
         <AdaptiveDpr pixelated={false} />
@@ -95,7 +111,12 @@ export function SolarSystemScene({
 
         <Suspense fallback={null}>
           <SpaceEnvironment />
-          <Starfield count={starfieldCount} />
+          {/* Three parallax layers. Bright/sparse near → dim/dense far. */}
+          <Starfield count={starCountFar} radius={640} />
+          <Starfield count={starCountMid} radius={360} />
+          {starCountNear > 0 ? (
+            <Starfield count={starCountNear} radius={200} />
+          ) : null}
 
           <group ref={heliocentricFrameRef}>
             {sun ? <Sun body={sun} radius={SUN_RADIUS} /> : null}
@@ -140,6 +161,7 @@ export function SolarSystemScene({
               frame while the frame itself moves through world space, and the
               trails — pinned to world space — record both motions at once. */}
           <PlanetTrails bodyIds={planets.map((b) => b.id)} />
+          <MotionAxis />
           <GalacticDust />
         </Suspense>
 
@@ -166,26 +188,13 @@ export function SolarSystemScene({
           onIntroActiveChange={onIntroActiveChange}
           sunDriftRef={sunDriftRef}
         />
-      </Canvas>
 
-      {/* Ambient bottom glow — reads as a distant nebula horizon. */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        aria-hidden
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 50% at 50% 120%, rgba(158, 241, 255, 0.08), transparent 60%)",
-        }}
-      />
-      {/* Subtle vignette for editorial framing. */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        aria-hidden
-        style={{
-          background:
-            "radial-gradient(ellipse 120% 90% at 50% 50%, transparent 58%, rgba(0, 0, 0, 0.48) 100%)",
-        }}
-      />
+        {/* Post-FX pass owns the final cinematic grade (bloom, edge CA,
+            vignette, fine film grain). Tier-gated internally so low-tier
+            devices skip it entirely. Mounted last so it composes the
+            fully-rendered scene. */}
+        <PostFX />
+      </Canvas>
 
       {hud}
     </div>

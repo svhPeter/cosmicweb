@@ -26,7 +26,10 @@ export function HomeHeroScene() {
   // hero: smaller star count (narrower field of view), lower DPR ceiling.
   const tierDpr: [number, number] =
     tier === "low" ? [1, 1.35] : tier === "medium" ? [1, 1.6] : [1, 2];
-  const starfieldCount = tier === "low" ? 900 : tier === "medium" ? 1500 : 2200;
+  // Two parallax layers here (smaller counts than the explore scene —
+  // the hero composition is calmer and already has a big Earth subject).
+  const starCountFar = tier === "low" ? 700 : tier === "medium" ? 1200 : 1800;
+  const starCountMid = tier === "low" ? 300 : tier === "medium" ? 500 : 800;
 
   return (
     <Canvas
@@ -54,8 +57,9 @@ export function HomeHeroScene() {
       <hemisphereLight args={["#d0d8e6", "#080b12", 0.14]} />
 
       <Suspense fallback={null}>
-        <SpaceEnvironment />
-        <Starfield count={starfieldCount} radius={260} />
+        <SpaceEnvironment showNamedDeepSky={false} />
+        <Starfield count={starCountFar} radius={420} />
+        <Starfield count={starCountMid} radius={240} />
         <HeroMotion />
 
         {earth ? (

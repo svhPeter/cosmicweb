@@ -117,7 +117,9 @@ function makeJupiterMaterial(sunWorld: THREE.Vector3, albedo: THREE.Texture): Ju
 
       void main() {
         vec3 n = normalize(vWorldNormal);
-        vec3 l = normalize(uSunWorld - vWorldPos);
+        // NaN-safe sun direction (see earth.tsx for rationale).
+        vec3 sunDir = uSunWorld - vWorldPos;
+        vec3 l = length(sunDir) > 1e-4 ? normalize(sunDir) : vec3(0.0, 1.0, 0.0);
         vec3 v = normalize(cameraPosition - vWorldPos);
         float ndl = clamp(dot(n, l), 0.0, 1.0);
         float ndv = clamp(dot(n, v), 0.0, 1.0);

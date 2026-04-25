@@ -5,10 +5,31 @@ import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import { bodies } from "@/data-static/bodies";
-import { bodyPositions } from "@/store/explore-store";
+import { bodyPositions, useExploreStore } from "@/store/explore-store";
 import { galacticState } from "@/store/galactic-state";
 
-const TRAIL_POINTS = 900;
+/**
+ * Per-planet trail length (number of ring-buffer points).
+ *
+ * Fast inner planets are sampled shorter because their helix coils
+ * tightly around the drift axis — a 900-point trail piles up dozens of
+ * overlapping loops and reads as noise. Slower outer planets get longer
+ * trails because their helix turns slowly and a short trail wouldn't
+ * communicate the helical form at all. Anything not listed uses DEFAULT.
+ */
+const DEFAULT_TRAIL_POINTS = 720;
+const TRAIL_POINTS_BY_ID: Record<string, number> = {
+  mercury: 360,
+  venus: 420,
+  earth: 520,
+  mars: 600,
+  jupiter: 720,
+  saturn: 780,
+  uranus: 820,
+  neptune: 840,
+  pluto: 840,
+};
+
 /**
  * Minimum distance a body must move between captures to register a new
  * point. Kept small so tilt-phase motion is sampled densely enough to
@@ -19,6 +40,8 @@ const MIN_DELTA = 0.006;
 interface TrailEntry {
   bodyId: string;
   color: THREE.Color;
+  /** Per-planet capacity — not every body gets the same trail length. */
+  capacity: number;
   /** Ring buffer — write-only, never reordered. */
   ring: Float32Array;
   /**
@@ -46,6 +69,9 @@ interface TrailEntry {
  */
 export function PlanetTrails({ bodyIds }: { bodyIds: string[] }) {
   const groupRef = useRef<THREE.Group>(null);
+  const focusedId = useExploreStore((s) => s.focusedBodyId);
+  const selectedId = useExploreStore((s) => s.selectedBodyId);
+  const emphasizedId = selectedId ?? focusedId;
 
   const trails = useMemo<TrailEntry[]>(() => {
     return bodyIds.map((bodyId) => {
@@ -53,9 +79,10 @@ export function PlanetTrails({ bodyIds }: { bodyIds: string[] }) {
       const hex = body?.render.colorHex ?? "#9fb3c8";
       const color = new THREE.Color(hex).lerp(new THREE.Color("#ffffff"), 0.18);
 
-      const ring = new Float32Array(TRAIL_POINTS * 3);
-      const renderPositions = new Float32Array(TRAIL_POINTS * 3);
-      const renderColors = new Float32Array(TRAIL_POINTS * 3);
+      const capacity = TRAIL_POINTS_BY_ID[bodyId] ?? DEFAULT_TRAIL_POINTS;
+      const ring = new Float32Array(capacity * 3);
+      const renderPositions = new Float32Array(capacity * 3);
+      const renderColors = new Float32Array(capacity * 3);
 
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute("position", new THREE.BufferAttribute(renderPositions, 3));
@@ -77,6 +104,7 @@ export function PlanetTrails({ bodyIds }: { bodyIds: string[] }) {
       return {
         bodyId,
         color,
+        capacity,
         ring,
         renderPositions,
         renderColors,
@@ -110,18 +138,21 @@ export function PlanetTrails({ bodyIds }: { bodyIds: string[] }) {
       return;
     }
 
+    const eased = reveal * reveal * (3 - 2 * reveal);
+
     for (const trail of trails) {
       const pos = bodyPositions.get(trail.bodyId);
       if (!pos) continue;
 
+      const cap = trail.capacity;
       const moved = scratch.current.subVectors(pos, trail.lastRecorded).lengthSq();
       if (moved >= MIN_DELTA * MIN_DELTA || trail.filled === 0) {
         const w = trail.writeHead;
         trail.ring[w * 3] = pos.x;
         trail.ring[w * 3 + 1] = pos.y;
         trail.ring[w * 3 + 2] = pos.z;
-        trail.writeHead = (w + 1) % TRAIL_POINTS;
-        trail.filled = Math.min(TRAIL_POINTS, trail.filled + 1);
+        trail.writeHead = (w + 1) % cap;
+        trail.filled = Math.min(cap, trail.filled + 1);
         trail.lastRecorded.copy(pos);
       }
 
@@ -134,18 +165,22 @@ export function PlanetTrails({ bodyIds }: { bodyIds: string[] }) {
       // Copy ring → render buffer in age order (oldest → newest). Because
       // source and destination are *separate* arrays there's no aliasing
       // and the resulting strip is a continuous curve.
-      const start = (trail.writeHead - count + TRAIL_POINTS) % TRAIL_POINTS;
+      const start = (trail.writeHead - count + cap) % cap;
       const invMax = 1 / Math.max(1, count - 1);
       for (let i = 0; i < count; i++) {
-        const srcIdx = (start + i) % TRAIL_POINTS;
+        const srcIdx = (start + i) % cap;
         const srcBase = srcIdx * 3;
         const dstBase = i * 3;
         trail.renderPositions[dstBase] = trail.ring[srcBase]!;
         trail.renderPositions[dstBase + 1] = trail.ring[srcBase + 1]!;
         trail.renderPositions[dstBase + 2] = trail.ring[srcBase + 2]!;
 
+        // Steeper age curve so the tail is nearly invisible and only
+        // the recent head reads. `age` goes 0 (oldest) → 1 (head).
+        // Cubic fade: tail drops to ~2% quickly so overlapping coils
+        // stop competing with each other.
         const age = i * invMax;
-        const intensity = age * age * 0.9 + 0.05;
+        const intensity = age * age * age * 0.96 + 0.015;
         trail.renderColors[dstBase] = trail.color.r * intensity;
         trail.renderColors[dstBase + 1] = trail.color.g * intensity;
         trail.renderColors[dstBase + 2] = trail.color.b * intensity;
@@ -155,8 +190,15 @@ export function PlanetTrails({ bodyIds }: { bodyIds: string[] }) {
       (trail.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
       (trail.geometry.getAttribute("color") as THREE.BufferAttribute).needsUpdate = true;
 
-      const eased = reveal * reveal * (3 - 2 * reveal);
-      trail.material.opacity = 0.85 * eased;
+      // Global opacity: emphasise the focused/selected body; all others
+      // drop to a quiet mid-tone so the helix hierarchy mirrors the
+      // scene's attention hierarchy.
+      const isEmphasized = emphasizedId === trail.bodyId;
+      const hasEmphasis = emphasizedId != null;
+      const base = hasEmphasis
+        ? (isEmphasized ? 0.62 : 0.22)
+        : 0.50;
+      trail.material.opacity = base * eased;
     }
   });
 

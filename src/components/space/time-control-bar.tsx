@@ -5,6 +5,7 @@ import { Pause, Play, Rewind, FastForward, Orbit, Sparkles, Ruler } from "lucide
 
 import { cn } from "@/lib/utils";
 import { useExploreStore } from "@/store/explore-store";
+import { ExploreAudioChip } from "@/components/space/explore-audio";
 
 const speedSteps = [0, 0.25, 0.5, 1, 2, 4, 8];
 
@@ -68,10 +69,17 @@ export function TimeControlBar({ className }: { className?: string }) {
         // gracefully spill to a second line on very narrow viewports
         // (<360px phones, or with system font scaling) instead of
         // horizontally clipping the play cluster or the toggles.
-        "cosmos-panel flex flex-wrap items-center justify-center gap-1 px-1.5 py-1 text-sm sm:px-2 sm:py-1.5",
+        "cosmos-panel flex flex-wrap items-center justify-center gap-1.5 px-2 py-1.5 text-sm sm:gap-1 sm:px-2 sm:py-1.5",
         "max-w-[min(100%,calc(100vw-1.5rem))]",
         className
       )}
+      onPointerDownCapture={(e) => {
+        // Prevent OrbitControls / canvas from treating taps as drags.
+        e.stopPropagation();
+      }}
+      onTouchStartCapture={(e) => {
+        e.stopPropagation();
+      }}
       role="group"
       aria-label="Simulation time controls"
     >
@@ -83,7 +91,7 @@ export function TimeControlBar({ className }: { className?: string }) {
       <button
         type="button"
         onClick={() => stepSpeed(-1)}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-white/5 hover:text-foreground"
+        className="inline-flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-white/5 hover:text-foreground touch-manipulation"
         aria-label="Slower"
       >
         <Rewind className="h-3.5 w-3.5" />
@@ -91,7 +99,7 @@ export function TimeControlBar({ className }: { className?: string }) {
       <button
         type="button"
         onClick={togglePlaying}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background transition hover:bg-foreground/90"
+        className="inline-flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-foreground text-background transition hover:bg-foreground/90 touch-manipulation"
         aria-label={playing ? "Pause" : "Play"}
       >
         {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
@@ -99,7 +107,7 @@ export function TimeControlBar({ className }: { className?: string }) {
       <button
         type="button"
         onClick={() => stepSpeed(1)}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-white/5 hover:text-foreground"
+        className="inline-flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-white/5 hover:text-foreground touch-manipulation"
         aria-label="Faster"
       >
         <FastForward className="h-3.5 w-3.5" />
@@ -120,7 +128,7 @@ export function TimeControlBar({ className }: { className?: string }) {
         className={cn(
           // `min-h-9` guarantees ≥36px hit-height even when the pill is
           // icon-only (phones, `sm:hidden` label state).
-          "inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] transition",
+          "inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-full px-3 py-2 sm:py-1.5 text-[11px] uppercase tracking-[0.18em] transition touch-manipulation",
           useRealOrbits
             ? "bg-accent/15 text-accent ring-1 ring-inset ring-accent/30"
             : "text-muted-foreground hover:text-foreground hover:bg-white/5"
@@ -136,7 +144,7 @@ export function TimeControlBar({ className }: { className?: string }) {
         onClick={() => setGalactic(!galactic)}
         aria-pressed={galactic}
         className={cn(
-          "inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] transition",
+          "inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-full px-3 py-2 sm:py-1.5 text-[11px] uppercase tracking-[0.18em] transition touch-manipulation",
           galactic
             ? "bg-accent/15 text-accent ring-1 ring-inset ring-accent/30"
             : "text-muted-foreground hover:text-foreground hover:bg-white/5"
@@ -151,6 +159,10 @@ export function TimeControlBar({ className }: { className?: string }) {
         <span className="hidden sm:inline">Galactic</span>
       </button>
 
+      <div className="mx-1 hidden h-4 w-px bg-border sm:block" aria-hidden />
+
+      <ExploreAudioChip />
+
       {/* Scale — Earth–Moon only. Appears when the user is actually
           engaging with Earth or the Moon, so the overview stays calm.
           Conditionally rendered (rather than opacity-hidden) so it
@@ -164,7 +176,7 @@ export function TimeControlBar({ className }: { className?: string }) {
           onClick={() => setEarthMoonScaleMode(!earthMoonScaleMode)}
           aria-pressed={earthMoonScaleMode}
           className={cn(
-            "inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] transition-colors",
+            "inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-full px-3 py-2 sm:py-1.5 text-[11px] uppercase tracking-[0.18em] transition-colors touch-manipulation",
             earthMoonScaleMode
               ? "bg-accent/15 text-accent ring-1 ring-inset ring-accent/30"
               : "text-muted-foreground hover:text-foreground hover:bg-white/5"

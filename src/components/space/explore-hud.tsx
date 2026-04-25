@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   ChevronLeft,
   Sparkles,
-  CircleDot,
-  Infinity as InfinityIcon,
   Ruler,
   Info,
 } from "lucide-react";
@@ -31,21 +29,18 @@ interface ExploreHudProps {
 }
 
 export function ExploreHud(_props: ExploreHudProps = {}) {
-  // Concept deep-link chips are revealed after 10s in the scene — long
-  // enough that the user has already settled in and the Solar System is
-  // the first thing they see, short enough that they discover the deeper
-  // concept routes without having to go back to the home page.
-  const [conceptsRevealed, setConceptsRevealed] = useState(false);
-  useEffect(() => {
-    const t = window.setTimeout(() => setConceptsRevealed(true), 10_000);
-    return () => window.clearTimeout(t);
-  }, []);
+  // Concepts chips were intentionally removed from /explore; keep the
+  // observatory surface focused and touch-safe.
 
   const focusedId = useExploreStore((s) => s.focusedBodyId);
   const selectedId = useExploreStore((s) => s.selectedBodyId);
+  const focusedSceneObjectId = useExploreStore((s) => s.focusedSceneObjectId);
+  const selectedSceneObjectId = useExploreStore((s) => s.selectedSceneObjectId);
   const setSelected = useExploreStore((s) => s.setSelected);
   const setFocused = useExploreStore((s) => s.setFocused);
-  const detailsHidden = Boolean(focusedId && !selectedId);
+  const setSelectedSceneObject = useExploreStore((s) => s.setSelectedSceneObject);
+  const setFocusedSceneObject = useExploreStore((s) => s.setFocusedSceneObject);
+  const detailsHidden = Boolean((focusedId && !selectedId) || (focusedSceneObjectId && !selectedSceneObjectId));
   const useRealOrbits = useExploreStore((s) => s.useRealOrbits);
   const galactic = useExploreStore((s) => s.galactic);
   const earthMoonScaleMode = useExploreStore((s) => s.earthMoonScaleMode);
@@ -109,6 +104,7 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
               type="button"
               onClick={() => {
                 if (focusedId) setSelected(focusedId);
+                else if (focusedSceneObjectId) setSelectedSceneObject(focusedSceneObjectId);
               }}
               className="cosmos-chip inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-3.5 py-2 transition-colors hover:text-foreground sm:min-w-0"
               aria-label="Show body details"
@@ -117,12 +113,14 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
               <span className="hidden min-[400px]:inline">Details</span>
             </button>
           ) : null}
-          {primary ? (
+          {primary || focusedSceneObjectId ? (
             <button
               type="button"
               onClick={() => {
                 setSelected(null);
                 setFocused(null);
+                setSelectedSceneObject(null);
+                setFocusedSceneObject(null);
               }}
               className="cosmos-chip inline-flex min-h-11 shrink-0 items-center px-3.5 py-2 transition-colors hover:text-foreground"
             >
@@ -253,7 +251,7 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
 
       <footer
         className={[
-          "pointer-events-none absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-3 sm:gap-4",
+          "pointer-events-auto absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-3 sm:gap-4",
           "pl-[max(1rem,env(safe-area-inset-left))]",
           "pr-[max(1rem,env(safe-area-inset-right))]",
           "pb-[max(1rem,env(safe-area-inset-bottom))]",
@@ -289,34 +287,9 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
 
         <TimeControlBar className="pointer-events-auto" />
 
-        {/* Concept deep-link chips. Hidden for the first 10s to keep the
-            first impression calm; fade in once the user has spent time
-            in the scene. Tap-through is only on these two chips; the
-            surrounding row stays inert. */}
-        <div
-          className={[
-            "pointer-events-none flex flex-wrap items-center justify-center gap-2 transition-opacity duration-700",
-            conceptsRevealed ? "opacity-100" : "opacity-0",
-          ].join(" ")}
-          aria-hidden={!conceptsRevealed}
-        >
-          <Link
-            href="/black-hole"
-            tabIndex={conceptsRevealed ? 0 : -1}
-            className="pointer-events-auto cosmos-chip inline-flex min-h-11 touch-manipulation items-center gap-1.5 px-3.5 py-2 transition-colors hover:text-foreground"
-          >
-            <CircleDot className="h-3 w-3 text-accent" aria-hidden />
-            <span>Approach the black hole</span>
-          </Link>
-          <Link
-            href="/wormhole"
-            tabIndex={conceptsRevealed ? 0 : -1}
-            className="pointer-events-auto cosmos-chip inline-flex min-h-11 touch-manipulation items-center gap-1.5 px-3.5 py-2 transition-colors hover:text-foreground"
-          >
-            <InfinityIcon className="h-3 w-3 text-accent" aria-hidden />
-            <span>Enter a wormhole</span>
-          </Link>
-        </div>
+        {/* Concept deep-link chips removed from /explore — they made the
+            control row harder to use on touch devices and pulled focus
+            away from the observatory experience. */}
 
         <p className="hidden px-4 text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 sm:block sm:text-[11px] sm:tracking-[0.22em]">
           {galactic ? (

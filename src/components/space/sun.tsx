@@ -37,13 +37,14 @@ type CoronaMat = THREE.ShaderMaterial & {
 };
 
 /**
- * **Sun_1_1391000.usdz**: mesh from the file + albedo/texture from the
- * same archive (first material `map`, cloned) when present; else
- * `nasa/image0_lin.jpg`. Procedural layers on top, chromosphere, corona,
- * limb, lights.
+ * **Sun_1_1391000.usdz** (NASA Science Mission Directorate asset): load
+ * geometry + **MeshPhysicalMaterial** from Three’s USDZLoader and keep
+ * those materials — swapping them for a flat procedural shader hid all
+ * normal / emissive / roughness detail. Fallback: textured sphere +
+ * granulation shader if the archive fails to load.
  */
 export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
-  const { camera } = useThree();
+  const { camera, gl } = useThree();
   const tier = useDeviceTier();
   const hovered = useExploreStore((s) => s.hoveredBodyId) === body.id;
   const selected = useExploreStore((s) => s.selectedBodyId) === body.id;
@@ -56,19 +57,16 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
   const lightRef = useRef<THREE.PointLight>(null);
   const farLightRef = useRef<THREE.PointLight>(null);
   const [nasaModel, setNasaModel] = useState<THREE.Object3D | null>(null);
-  /** Albedo from the USDZ (cloned); falls back to `sunMap` when not present. */
-  const [usdzMap, setUsdzMap] = useState<THREE.Texture | null>(null);
 
   const sunMap = useTexture("/textures/sun/nasa/image0_lin.jpg");
-  const photosphereMap = usdzMap ?? sunMap;
   const coreMat = useMemo<SunCoreMat>(
     () =>
       makeSunCoreMaterial(
         body.render.colorHex,
         body.render.emissiveHex,
-        photosphereMap
+        sunMap
       ),
-    [body.render.colorHex, body.render.emissiveHex, photosphereMap]
+    [body.render.colorHex, body.render.emissiveHex, sunMap]
   );
   const chromoMat = useMemo<ChromosphereMat>(() => makeChromosphereMaterial(body.render.colorHex), [body.render.colorHex]);
   const coronaInnerMat = useMemo<CoronaMat>(() => makeCoronaMaterial(body.render.colorHex, { strength: 0.55, scale: 3.15 }), [body.render.colorHex]);
@@ -77,10 +75,14 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
   const worldPos = useRef(new THREE.Vector3());
 
   useEffect(() => {
+    if (tier === "low") {
+      setNasaModel(null);
+      return;
+    }
     let cancelled = false;
     const loader = new USDZLoader();
     loader
-      .loadAsync("/textures/sun/Sun_1_1391000.usdz")
+      .loadAsync("/models/sun/Sun_1_1391000.usdz")
       .then((g) => {
         if (cancelled) return;
         // Normalize scale to match our Sun radius (model is arbitrary units).
@@ -96,69 +98,16 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
             (o as THREE.Mesh).receiveShadow = false;
           }
         });
-        // Prefer textures shipped inside the same USDZ (albedo on first mesh w/ .map).
-        let extracted: THREE.Texture | null = null;
-        g.traverse((o) => {
-          if (extracted) return;
-          if (!(o as THREE.Mesh).isMesh) return;
-          const mat = (o as THREE.Mesh).material as
-            | THREE.Material
-            | THREE.Material[]
-            | undefined;
-          if (!mat) return;
-          const list = Array.isArray(mat) ? mat : [mat];
-          for (const m of list) {
-            const std = m as THREE.MeshStandardMaterial;
-            const src = std.map ?? std.emissiveMap;
-            if (src) {
-              const c = src.clone();
-              c.colorSpace = THREE.SRGBColorSpace;
-              c.anisotropy = 8;
-              c.needsUpdate = true;
-              extracted = c;
-              return;
-            }
-          }
-        });
-        setUsdzMap(extracted);
+        tuneNasaSunMaterials(g, gl.capabilities.getMaxAnisotropy());
         setNasaModel(g);
       })
       .catch(() => {
-        setNasaModel(null);
-        setUsdzMap(null);
+        if (!cancelled) setNasaModel(null);
       });
     return () => {
       cancelled = true;
     };
-  }, [radius]);
-
-  useEffect(() => {
-    return () => {
-      if (usdzMap) {
-        usdzMap.dispose();
-      }
-    };
-  }, [usdzMap]);
-
-  // Swap USDZ PBR / baked materials for our photosphere shader (texture + granulation
-  // + limb). Without this, the model looks like a flat matte ball — the "old" look.
-  useEffect(() => {
-    if (!nasaModel) return;
-    nasaModel.traverse((o) => {
-      if (!(o as THREE.Mesh).isMesh) return;
-      const m = o as THREE.Mesh;
-      const prev = m.material;
-      const already = Array.isArray(prev) ? prev.every((mm) => mm === coreMat) : prev === coreMat;
-      if (already) return;
-      if (Array.isArray(prev)) {
-        prev.forEach((mm) => mm.dispose());
-        m.material = coreMat;
-      } else {
-        prev.dispose();
-        m.material = coreMat;
-      }
-    });
-  }, [nasaModel, coreMat]);
+  }, [radius, gl, tier]);
 
   useFrame((_, delta) => {
     const t = performance.now() * 0.001;
@@ -167,8 +116,8 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
     if (coreRef.current) coreRef.current.rotation.y += delta * 0.05;
     if (modelRef.current) modelRef.current.rotation.y += delta * 0.05;
 
-    // Update shader time uniforms.
-    coreMat.uniforms.uTime.value = t;
+    // Procedural shader only drives the fallback sphere, not the USDZ mesh.
+    if (!nasaModel) coreMat.uniforms.uTime.value = t;
     chromoMat.uniforms.uTime.value = t;
     coronaInnerMat.uniforms.uTime.value = t;
     coronaOuterMat.uniforms.uTime.value = t;
@@ -205,6 +154,7 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
         blending: THREE.AdditiveBlending,
         toneMapped: false,
         uniforms: {
+          uMul: { value: 1 },
           uCInner: { value: new THREE.Color("#fff8ef") },
           uCOuter: { value: new THREE.Color("#f5a050").lerp(new THREE.Color("#ffd8a0"), 0.5) },
         },
@@ -221,6 +171,7 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
           precision highp float;
           varying vec3 vN;
           varying vec3 vPE;
+          uniform float uMul;
           uniform vec3 uCInner;
           uniform vec3 uCOuter;
           void main() {
@@ -230,13 +181,30 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
             float t = pow(1.0 - ndv, 2.4);
             float t2 = pow(1.0 - ndv, 5.0) * 0.35;
             vec3 col = mix(uCInner, uCOuter, 1.0 - ndv);
-            float a = 0.07 * t + 0.09 * t2;
+            float a = (0.07 * t + 0.09 * t2) * uMul;
             gl_FragColor = vec4(col * a, a);
           }
         `,
       }),
     []
   );
+
+  useEffect(() => {
+    const u = limbalHalo.uniforms.uMul;
+    if (u) u.value = nasaModel ? 0.12 : 1;
+  }, [limbalHalo, nasaModel]);
+
+  useEffect(() => {
+    const inner = coronaInnerMat.uniforms.uStrength;
+    const outer = coronaOuterMat.uniforms.uStrength;
+    if (nasaModel) {
+      inner.value = 0.22;
+      outer.value = 0.18;
+    } else {
+      inner.value = 0.55;
+      outer.value = 0.42;
+    }
+  }, [nasaModel, coronaInnerMat, coronaOuterMat]);
 
   useEffect(
     () => () => {
@@ -289,17 +257,19 @@ export function Sun({ body, radius }: { body: CelestialBody; radius: number }) {
         </mesh>
       )}
 
-      {/* Thin shell: only the limb (grazing) lights up — not a full yellow disc. */}
+      {/* Thin shell: limb glow. Much weaker when the NASA USDZ carries real surface detail. */}
       <mesh>
         <sphereGeometry args={[radius * 1.1, 48, 48]} />
         <primitive object={limbalHalo} attach="material" />
       </mesh>
 
-      {/* Chromosphere — thin fresnel-ish glow shell. */}
-      <mesh ref={chromoRef}>
-        <sphereGeometry args={[radius * 1.06, 56, 56]} />
-        <primitive attach="material" object={chromoMat} />
-      </mesh>
+      {/* Chromosphere — skip on NASA mesh so we do not stack a yellow haze over PBR detail. */}
+      {nasaModel ? null : (
+        <mesh ref={chromoRef}>
+          <sphereGeometry args={[radius * 1.06, 56, 56]} />
+          <primitive attach="material" object={chromoMat} />
+        </mesh>
+      )}
 
       {/* Corona — irregular, noise-shaped wisps (no stacked disc spheres). */}
       <mesh ref={coronaInnerRef} rotation={[0, 0, 0]}>
@@ -677,4 +647,45 @@ function makeCoronaMaterial(
       }
     `,
   }) as CoronaMat;
+}
+
+/** Tune loader materials so the NASA disk reads under our lights + bloom. */
+function tuneNasaSunMaterials(root: THREE.Object3D, maxAniso: number) {
+  const aniso = Math.min(16, Math.max(1, maxAniso));
+  root.traverse((obj) => {
+    const mesh = obj as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    for (const raw of mats) {
+      if (
+        raw instanceof THREE.MeshPhysicalMaterial ||
+        raw instanceof THREE.MeshStandardMaterial
+      ) {
+        const m = raw;
+        m.envMapIntensity = 0;
+        // Bloom stack: keep highlights without ACES washing the disk flat.
+        m.toneMapped = false;
+        m.metalness = THREE.MathUtils.clamp(m.metalness, 0, 0.08);
+        // Point light sits at the centre; diffuse lighting on the outer shell is ~0.
+        // Emissive (from USD or driven by the albedo map) carries the granulation look.
+        if (m.map && !m.emissiveMap) {
+          m.emissiveMap = m.map;
+          m.emissive.setRGB(1, 1, 1);
+        }
+        m.emissiveIntensity = Math.max(m.emissiveIntensity, m.emissiveMap ? 1.75 : 1.35);
+        const bump = (t: THREE.Texture | null | undefined) => {
+          if (!t) return;
+          t.anisotropy = aniso;
+          t.needsUpdate = true;
+        };
+        bump(m.map);
+        bump(m.emissiveMap);
+        bump(m.normalMap);
+        bump(m.roughnessMap);
+        bump(m.metalnessMap);
+        bump(m.aoMap);
+        m.needsUpdate = true;
+      }
+    }
+  });
 }

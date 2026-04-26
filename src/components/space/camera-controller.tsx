@@ -29,6 +29,10 @@ const NORMAL_OVERVIEW_TARGET = new THREE.Vector3(0, 0, 0);
  * helical trails behind the planets have room to develop before the
  * camera edge clips them. The offset still sits alongside the motion
  * direction so trails flow across the frame rather than into depth.
+ *
+ * The 60° ecliptic–galactic relationship is *not* carried by rotating the
+ * heliocentric group; this camera offset only reframes a stable solar
+ * system while the tilt reads from reference geometry in the scene.
  */
 const GALACTIC_CAM_OFFSET = new THREE.Vector3(-22, 24, 52);
 const GALACTIC_TRANSITION_SECONDS = 3.2;
@@ -48,8 +52,7 @@ function smootherstep(t: number): number {
  *  - keeps focused bodies centered as they move by translating
  *    camera+target together (no snapping / no dead zones),
  *  - runs a cinematic reframe when the galactic frame toggles on or off,
- *    smoothly orbiting the camera to a pose that reveals the 60° tilt
- *    and the helical trails — then hands control back to the user,
+ *    pulling back to a wide “two motions” read — then hands back to the user,
  *  - after the reframe, lets the camera drift with the system by
  *    translating by the Sun's world-space delta each frame.
  */

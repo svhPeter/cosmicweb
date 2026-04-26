@@ -6,8 +6,24 @@ import * as THREE from "three";
 
 import { bodyPositions, useExploreStore } from "@/store/explore-store";
 import { galacticState } from "@/store/galactic-state";
+import { useDeviceTier } from "@/lib/use-device-tier";
 
-const COUNT = 520;
+function dustCountForTier(t: "low" | "medium" | "high"): number {
+  if (t === "low") return 180;
+  if (t === "medium") return 320;
+  return 520;
+}
+
+function mulberry32(seed: number) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 /** Radius of the cylindrical volume of dust around the motion axis. */
 const TUBE_RADIUS = 62;
 /** Full length of the volume along the motion axis — dust wraps inside this. */
@@ -30,14 +46,17 @@ const STREAK_EXTRA = 0.35;
 export function GalacticDust() {
   const groupRef = useRef<THREE.Group>(null);
   const playing = useExploreStore((s) => s.playing);
+  const tier = useDeviceTier();
+  const count = dustCountForTier(tier);
 
   const { positions, colors, offsets, radials } = useMemo(() => {
-    const positions = new Float32Array(COUNT * 2 * 3);
-    const colors = new Float32Array(COUNT * 2 * 3);
-    const offsets = new Float32Array(COUNT); // axial offset along motion dir
-    const radials = new Float32Array(COUNT * 3); // per-particle radial offset
+    const n = count;
+    const positions = new Float32Array(n * 2 * 3);
+    const colors = new Float32Array(n * 2 * 3);
+    const offsets = new Float32Array(n); // axial offset along motion dir
+    const radials = new Float32Array(n * 3); // per-particle radial offset
     const rand = mulberry32(0x2a17);
-    for (let i = 0; i < COUNT; i++) {
+    for (let i = 0; i < n; i++) {
       const theta = rand() * Math.PI * 2;
       const r = TUBE_RADIUS * (0.18 + 0.82 * Math.sqrt(rand()));
       // Construct an orthonormal basis around the motion direction so the
@@ -58,7 +77,7 @@ export function GalacticDust() {
       offsets[i] = rand() * TUBE_LENGTH;
     }
     return { positions, colors, offsets, radials };
-  }, []);
+  }, [count]);
 
   const geometry = useMemo(() => {
     const g = new THREE.BufferGeometry();
@@ -87,18 +106,6 @@ export function GalacticDust() {
     };
   }, [geometry, material]);
 
-  // Random number generator — small, deterministic, doesn't touch Math.random().
-  function mulberry32(seed: number) {
-    let a = seed >>> 0;
-    return function () {
-      a = (a + 0x6d2b79f5) >>> 0;
-      let t = a;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-
   const scrollRef = useRef(0);
 
   useFrame((_, rawDelta) => {
@@ -126,7 +133,7 @@ export function GalacticDust() {
     }
 
     const dir = galacticState.motionDir;
-    for (let i = 0; i < COUNT; i++) {
+    for (let i = 0; i < count; i++) {
       // Position in the range [-TUBE_LENGTH/2, +TUBE_LENGTH/2], scrolling
       // backwards relative to motion direction (so the dust streams past).
       let axial = ((offsets[i]! - scrollRef.current) % TUBE_LENGTH + TUBE_LENGTH) % TUBE_LENGTH;

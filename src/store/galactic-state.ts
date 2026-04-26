@@ -17,12 +17,10 @@ import * as THREE from "three";
  *   - The Sun travels along the galactic plane. `motionDir` is horizontal
  *     (Y component = 0), so drift never lifts the system off the plane.
  *   - The *ecliptic* (the plane the planets orbit in) is tilted ~60° to
- *     the galactic plane, which is the real angle. In heliocentric /
- *     normal mode we render the ecliptic flat for readability; in the
- *     galactic frame we honour reality and tilt the whole heliocentric
- *     frame group around `tiltAxis` by `tiltAngleRad`. That tilt is the
- *     single gesture that says "this is the galactic frame, and the
- *     planets orbit in a plane that doesn't match where we're going."
+ *     the galactic plane. The heliocentric group keeps a flat ecliptic;
+ *     the galactic reference ring and motion axis share a separate shell
+ *     at the Sun, rotated by `tiltAngleRad` around `tiltAxis`, so the
+ *     physical angle is visible without re-orienting the planets.
  *
  *  revealT          0 in heliocentric frame, 1 in galactic frame. Every
  *                   galactic visual (drift, tilt, trails, rings, dust,

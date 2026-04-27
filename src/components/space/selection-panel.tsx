@@ -178,8 +178,15 @@ export function SelectionPanel() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 12, scale: 0.99 }}
           transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          // Prevent mobile taps from starting OrbitControls gestures behind the sheet.
+          onPointerDownCapture={(e) => {
+            e.stopPropagation();
+          }}
+          onTouchStartCapture={(e) => {
+            e.stopPropagation();
+          }}
           className={cn(
-            "pointer-events-auto fixed z-[100] flex min-h-0 min-w-0 flex-col",
+            "pointer-events-auto fixed z-[100] flex min-h-0 min-w-0 flex-col touch-manipulation",
             // Desktop: premium floating inspector (never full-width).
             "sm:w-[min(26rem,calc(100vw-1.5rem))] sm:max-w-[26rem] sm:max-h-[70vh]",
             // Mobile: bottom sheet above controls.

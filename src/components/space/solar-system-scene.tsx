@@ -39,7 +39,10 @@ import { useDeviceTier } from "@/lib/use-device-tier";
  *   SUN_RADIUS         composed to feel correct relative to inner planets
  */
 const ORBIT_SCALE = 6.8;
-const AU_TO_SCENE = 4.2;
+// Real-orbits needs AU scaling that keeps Mercury/Venus outside the Sun disk.
+// We align 1 AU to roughly the old stylised Earth's orbit radius (~14.3u).
+const AU_TO_SCENE_REAL = ORBIT_SCALE * 2.1; // 14.28
+const AU_TO_SCENE_VISUAL = 4.2;
 const SIZE_SCALE = 0.55;
 const MIN_PLANET_SIZE = 0.28;
 const SUN_RADIUS = 2.4;
@@ -87,6 +90,7 @@ export function SolarSystemScene({
   // it — that's the two-motions picture, built from one scene graph.
   const heliocentricFrameRef = useRef<THREE.Group>(null);
   const sunDriftRef = useRef(new THREE.Vector3());
+  const auToScene = useRealOrbits ? AU_TO_SCENE_REAL : AU_TO_SCENE_VISUAL;
 
   const sun = bodies.find((b) => b.type === "star");
   // Planets and dwarf planets orbit the Sun directly. Moons (type
@@ -157,7 +161,7 @@ export function SolarSystemScene({
                 : (2 * Math.PI) / 365.25;
               const visualPhase = (i / planets.length) * Math.PI * 2 + i * 0.37;
               const realisticRadius = body.orbitalElements
-                ? body.orbitalElements.semiMajorAxisAu * AU_TO_SCENE
+                ? body.orbitalElements.semiMajorAxisAu * auToScene
                 : visualRadius;
               const orbitRadius = useRealOrbits && body.orbitalElements ? realisticRadius : visualRadius;
 
@@ -168,7 +172,7 @@ export function SolarSystemScene({
                     radius={orbitRadius}
                     orbitAu={body.render.orbitAu}
                     elements={useRealOrbits ? body.orbitalElements : undefined}
-                    auToScene={AU_TO_SCENE}
+                    auToScene={auToScene}
                     color={body.render.colorHex}
                   />
                   <Planet
@@ -176,7 +180,7 @@ export function SolarSystemScene({
                     visualOrbitRadius={visualRadius}
                     visualPhase={visualPhase}
                     visualAngularSpeed={visualSpeed}
-                    auToSceneUnits={AU_TO_SCENE}
+                    auToSceneUnits={auToScene}
                     sizeScale={SIZE_SCALE}
                     minSize={MIN_PLANET_SIZE}
                   />
@@ -210,7 +214,7 @@ export function SolarSystemScene({
           <GalacticDust />
         </Suspense>
 
-        <GalacticController groupRef={heliocentricFrameRef} sunDriftRef={sunDriftRef} />
+        <GalacticController groupRef={heliocentricFrameRef} sunDriftRef={sunDriftRef} auToScene={auToScene} />
 
         <OrbitControls
           ref={controlsRef}

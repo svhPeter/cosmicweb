@@ -174,9 +174,11 @@ export function SelectionPanel() {
           key={body?.id ?? sceneObject!.id}
           role="dialog"
           aria-label={`${body?.name ?? sceneObject!.name} — inspection`}
-          initial={{ opacity: 0, y: 14, scale: 0.99 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 12, scale: 0.99 }}
+          // Mobile browsers (esp. iOS) can miscompute hit-testing for `position: fixed`
+          // elements when a transform scale is animating. Keep the sheet unscaled.
+          initial={isDesktop ? { opacity: 0, y: 14, scale: 0.99 } : { opacity: 0, y: 14 }}
+          animate={isDesktop ? { opacity: 1, y: 0, scale: 1 } : { opacity: 1, y: 0 }}
+          exit={isDesktop ? { opacity: 0, y: 12, scale: 0.99 } : { opacity: 0, y: 12 }}
           transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           // Prevent mobile taps from starting OrbitControls gestures behind the sheet.
           onPointerDownCapture={(e) => {

@@ -17,6 +17,8 @@ interface Props {
    * ref each frame; the camera reads the ref.
    */
   sunDriftRef: React.RefObject<THREE.Vector3>;
+  /** Scene units per AU (must match the orbit solver scaling). */
+  auToScene: number;
 }
 
 /**
@@ -29,7 +31,7 @@ interface Props {
  * honour the real 60° angle between the ecliptic and the galactic plane,
  * then begins drifting forward and emitting helical trails.
  */
-export function GalacticController({ groupRef, sunDriftRef }: Props) {
+export function GalacticController({ groupRef, sunDriftRef, auToScene }: Props) {
   const galactic = useExploreStore((s) => s.galactic);
   const playing = useExploreStore((s) => s.playing);
   const tmpQuat = useRef(new THREE.Quaternion());
@@ -61,7 +63,7 @@ export function GalacticController({ groupRef, sunDriftRef }: Props) {
       const dtDays = delta * speedDaysPerSec * 1.0;
       const dtSec = dtDays * SECONDS_PER_DAY;
       const driftAu = (galacticState.sunSpeedKmS * dtSec) / AU_KM;
-      const driftScene = driftAu * galacticState.auToScene;
+      const driftScene = driftAu * auToScene;
       galacticState.drift.addScaledVector(
         galacticState.motionDir,
         driftScene * galacticState.revealT

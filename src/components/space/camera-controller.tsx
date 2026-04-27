@@ -12,6 +12,10 @@ const INTRO_SEEN_KEY = "cosmos.explore.introSeen.v1";
 
 const NORMAL_OVERVIEW_POS = new THREE.Vector3(0, 16, 34);
 const NORMAL_OVERVIEW_TARGET = new THREE.Vector3(0, 0, 0);
+// Real-orbits mode spreads the outer planets much further out (AU-scaled),
+// so the overview camera needs a wider default pose to keep the system
+// readable without the user immediately zooming out.
+const REAL_ORBITS_OVERVIEW_POS = new THREE.Vector3(0, 34, 128);
 
 /**
  * Pose offset applied around the Sun when galactic frame is active.
@@ -69,6 +73,7 @@ export function CameraController({
   const focusedId = useExploreStore((s) => s.focusedBodyId);
   const galactic = useExploreStore((s) => s.galactic);
   const earthMoonScaleMode = useExploreStore((s) => s.earthMoonScaleMode);
+  const useRealOrbits = useExploreStore((s) => s.useRealOrbits);
 
   const overviewPos = useRef(NORMAL_OVERVIEW_POS.clone());
   const overviewTarget = useRef(NORMAL_OVERVIEW_TARGET.clone());
@@ -164,6 +169,14 @@ export function CameraController({
       controls.removeEventListener("end", onEnd);
     };
   }, [controlsRef]);
+
+  // Keep the default overview pose in sync with orbit mode.
+  useEffect(() => {
+    if (focusedId) return;
+    if (intro.current.active) return;
+    overviewPos.current.copy(useRealOrbits ? REAL_ORBITS_OVERVIEW_POS : NORMAL_OVERVIEW_POS);
+    overviewTarget.current.copy(NORMAL_OVERVIEW_TARGET);
+  }, [useRealOrbits, focusedId]);
 
   // Cinematic intro sweep: once per user (skip on return), and skippable immediately.
   useEffect(() => {

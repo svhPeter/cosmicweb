@@ -19,7 +19,6 @@ import { PlanetTrails } from "@/components/space/planet-trails";
 import { MotionAxis } from "@/components/space/motion-axis";
 import {
   EclipticDisc,
-  GalacticReferenceShell,
   GalacticPlaneRing,
 } from "@/components/space/orientation-frame";
 import { EarthMoonSystem } from "@/components/space/earth-moon-system";
@@ -139,7 +138,10 @@ export function SolarSystemScene({
           <group ref={heliocentricFrameRef}>
             {sun ? <Sun body={sun} radius={SUN_RADIUS} /> : null}
 
-            {/* Ecliptic reference plane: same XZ as the stylised orbits. */}
+            {/* Ecliptic reference plane. Lives inside the heliocentric
+                group, so it tilts with the orbits — the user sees an
+                actual tilted surface the planets ride on in galactic
+                mode. Quiet/invisible otherwise (keyed off revealT). */}
             <EclipticDisc />
 
             {planets.map((body, i) => {
@@ -193,10 +195,12 @@ export function SolarSystemScene({
           />
 
           <PlanetTrails bodyIds={planets.map((b) => b.id)} />
-          <GalacticReferenceShell>
-            <MotionAxis useParentTransform />
-            <GalacticPlaneRing />
-          </GalacticReferenceShell>
+          <MotionAxis />
+          {/* Galactic plane reference ring — world-space horizontal, so
+              the contrast against the tilted ecliptic disc is
+              unambiguous. Together they make the 60° tilt read as a
+              measured geometric relationship, not a camera angle. */}
+          <GalacticPlaneRing />
           <GalacticDust />
         </Suspense>
 

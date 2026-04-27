@@ -1,6 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
+import { useRef } from "react";
 import * as THREE from "three";
 
 import { useExploreStore } from "@/store/explore-store";
@@ -18,15 +19,20 @@ interface Props {
 }
 
 /**
- * Headless component: galactic reveal (revealT), linear drift, and sun
- * position fan-out. The heliocentric group is **not** rotated — the
- * 60° ecliptic–galactic relationship is shown via the camera reframe
- * and the tilted `GalacticPlaneRing` (see `orientation-frame.tsx`) so
- * toggling the mode does not re-orient the whole solar system.
+ * Headless component that owns the galactic-frame reveal, tilt, and drift.
+ *
+ * One scalar (`revealT`) drives every galactic visual — the ecliptic
+ * tilt, trails, dust, orbit ring fade, starfield freeze — so the
+ * transition is coherent across independent components. The tilt is
+ * what makes the reveal cinematic: the scene physically rotates to
+ * honour the real 60° angle between the ecliptic and the galactic plane,
+ * then begins drifting forward and emitting helical trails.
  */
 export function GalacticController({ groupRef, sunDriftRef }: Props) {
   const galactic = useExploreStore((s) => s.galactic);
   const playing = useExploreStore((s) => s.playing);
+  const tmpQuat = useRef(new THREE.Quaternion());
+  const tmpEuler = useRef(new THREE.Euler());
 
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
@@ -60,10 +66,20 @@ export function GalacticController({ groupRef, sunDriftRef }: Props) {
     }
 
     if (groupRef.current) {
-      // Position: drift along the galactic motion axis. Orientation stays
-      // the identity so overview vs galactic never “re-spins” the planets.
+      // Position: drift along the galactic motion axis.
       groupRef.current.position.copy(galacticState.drift);
-      groupRef.current.quaternion.identity();
+
+      // Tilt: rotate the whole heliocentric frame around the axis
+      // perpendicular to motion in the galactic plane. We use a smoother
+      // easing (smoothstep of revealT) so the tilt settles with zero
+      // angular velocity at both ends — the mid-transition acceleration
+      // is where the reveal feels most like a discovery.
+      const eased = galacticState.revealT * galacticState.revealT * (3 - 2 * galacticState.revealT);
+      const angle = eased * galacticState.tiltAngleRad;
+      tmpQuat.current.setFromAxisAngle(galacticState.tiltAxis, angle);
+      groupRef.current.quaternion.copy(tmpQuat.current);
+      // Keep Euler scratch aligned so hot-reloads don't surprise us.
+      tmpEuler.current.setFromQuaternion(tmpQuat.current);
     }
 
     // Publish Sun drift so the camera can follow without re-reading state.

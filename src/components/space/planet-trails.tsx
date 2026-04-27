@@ -1,18 +1,12 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import { bodies } from "@/data-static/bodies";
 import { bodyPositions, useExploreStore } from "@/store/explore-store";
 import { galacticState } from "@/store/galactic-state";
-import { useDeviceTier, type DeviceTier } from "@/lib/use-device-tier";
-
-function scaleTrailPoints(base: number, tier: DeviceTier): number {
-  const mult = tier === "low" ? 0.5 : tier === "medium" ? 0.72 : 1;
-  return Math.max(120, Math.floor(base * mult));
-}
 
 /**
  * Per-planet trail length (number of ring-buffer points).
@@ -22,8 +16,6 @@ function scaleTrailPoints(base: number, tier: DeviceTier): number {
  * overlapping loops and reads as noise. Slower outer planets get longer
  * trails because their helix turns slowly and a short trail wouldn't
  * communicate the helical form at all. Anything not listed uses DEFAULT.
- * Per-body counts are scaled at runtime by `useDeviceTier` (see
- * `scaleTrailPoints`) so phones do not overdraw 8 long line strips.
  */
 const DEFAULT_TRAIL_POINTS = 720;
 const TRAIL_POINTS_BY_ID: Record<string, number> = {
@@ -80,7 +72,6 @@ export function PlanetTrails({ bodyIds }: { bodyIds: string[] }) {
   const focusedId = useExploreStore((s) => s.focusedBodyId);
   const selectedId = useExploreStore((s) => s.selectedBodyId);
   const emphasizedId = selectedId ?? focusedId;
-  const tier = useDeviceTier();
 
   const trails = useMemo<TrailEntry[]>(() => {
     return bodyIds.map((bodyId) => {
@@ -88,8 +79,7 @@ export function PlanetTrails({ bodyIds }: { bodyIds: string[] }) {
       const hex = body?.render.colorHex ?? "#9fb3c8";
       const color = new THREE.Color(hex).lerp(new THREE.Color("#ffffff"), 0.18);
 
-      const baseCap = TRAIL_POINTS_BY_ID[bodyId] ?? DEFAULT_TRAIL_POINTS;
-      const capacity = scaleTrailPoints(baseCap, tier);
+      const capacity = TRAIL_POINTS_BY_ID[bodyId] ?? DEFAULT_TRAIL_POINTS;
       const ring = new Float32Array(capacity * 3);
       const renderPositions = new Float32Array(capacity * 3);
       const renderColors = new Float32Array(capacity * 3);
@@ -126,18 +116,7 @@ export function PlanetTrails({ bodyIds }: { bodyIds: string[] }) {
         lineObject,
       };
     });
-  }, [bodyIds, tier]);
-
-  // When `tier` or `bodyIds` changes, `trails` is a new useMemo; dispose the
-  // previous generation so resize / breakpoint changes do not leak GPU buffers.
-  useEffect(() => {
-    return () => {
-      for (const t of trails) {
-        t.geometry.dispose();
-        t.material.dispose();
-      }
-    };
-  }, [trails]);
+  }, [bodyIds]);
 
   const scratch = useRef(new THREE.Vector3());
 

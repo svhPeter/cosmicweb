@@ -12,45 +12,33 @@ import {
 } from "@/store/galactic-state";
 
 /**
- * Galactic mode references — two quiet planes: the ecliptic (where the
- * planets orbit) stays in the heliocentric group; a separate galactic
- * disc is rotated ~60° in world space so the angle between the two
- * is geometrically clear **without** rotating the Sun+planets group
- * (that re-orientation is reserved for the camera and this decoration).
+ * Orientation frame for galactic mode — two reference planes that turn
+ * the tilt from an implicit camera gesture into a geometric statement.
  *
- *   EclipticDisc       — inside the heliocentric frame, same plane as
- *                        the stylised orbits.
- *   GalacticPlaneRing  — follows the Sun, rotated around `tiltAxis`
- *                        by `ECLIPTIC_TO_GALAXY_DEG` (eased with revealT)
- *                        so it represents the Milky Way plane relative
- *                        to the ecliptic. Motion along `motionDir` lies
- *                        in the galactic plane; the camera reframe
- *                        completes the “two directions” read.
+ * Without these, the 60° tilt reads as "the camera angle changed"
+ * because the scene has no *flat* to compare it against. The solution
+ * is not a bigger tilt, it's a visible reference: the flat one
+ * (galactic plane, world-horizontal) and the tilted one (ecliptic plane,
+ * heliocentric-local), both rendered as very quiet rings so the
+ * composition stays calm and the eye can register the angle between them.
+ *
+ * Components:
+ *   EclipticDisc       — faint radial-gradient disc + rim ring, inside
+ *                        the heliocentric frame group. Tilts with the
+ *                        planets; reads as the surface they orbit on.
+ *   GalacticPlaneRing  — faint horizontal ring in world space, anchored
+ *                        to the Sun. Represents the galactic plane; the
+ *                        "flat" against which the ecliptic sits tilted.
+ *
+ * Both fade in/out with `galacticState.revealT` so they are completely
+ * absent in normal mode and emerge as part of the galactic reveal.
+ *
+ * Why this sells the two-motions story: the motion axis (already in the
+ * scene, labelled ~230 km/s) lives in the galactic plane. The orbits
+ * live in the ecliptic plane. With both planes visible the picture
+ * becomes "a disc-shaped system tilted 60° to the direction it is
+ * being carried through" — which is the actual physical statement.
  */
-
-/**
- * World-space group at the Sun: combines the 60° galactic-tilt (same
- * `tiltAxis` as before) with **all** co-planar decorations (reference
- * ring + `MotionAxis`) so velocity lies in the galactic plane, while the
- * heliocentric planet frame stays in ecliptic XZ.
- */
-export function GalacticReferenceShell({ children }: { children: React.ReactNode }) {
-  const shellRef = useRef<THREE.Group>(null);
-  const quat = useRef(new THREE.Quaternion());
-
-  useFrame(() => {
-    if (!shellRef.current) return;
-    const sun = bodyPositions.get("sun");
-    if (sun) shellRef.current.position.copy(sun);
-    const reveal = galacticState.revealT;
-    const eased = reveal * reveal * (3 - 2 * reveal);
-    const ang = eased * galacticState.tiltAngleRad;
-    quat.current.setFromAxisAngle(galacticState.tiltAxis, ang);
-    shellRef.current.quaternion.copy(quat.current);
-  });
-
-  return <group ref={shellRef}>{children}</group>;
-}
 
 // Sized just outside the outermost visual orbit (Neptune ≈ 55 units in
 // visual mode), so the disc clearly encompasses every planet track.
@@ -147,17 +135,19 @@ export function EclipticDisc() {
     }
   });
 
-  // Rim of the ecliptic disc in heliocentric XZ; frame no longer re-spins
-  // in galactic mode, so a fixed edge pick is enough.
-  const labelPosition: [number, number, number] = [
-    -ECL_OUTER * 1.03,
-    0,
-    0,
-  ];
+  // Label at −tilt-axis edge of the disc: this point lies on the tilt
+  // axis, so its *world* position barely moves as the heliocentric
+  // frame rotates through galactic mode, which keeps the label stable
+  // on screen during the reveal rather than arcing around.
+  const labelPosition = useMemo<[number, number, number]>(() => {
+    const a = galacticState.tiltAxis;
+    return [-a.x * ECL_OUTER * 1.03, 0, -a.z * ECL_OUTER * 1.03];
+  }, []);
 
   return (
     <group frustumCulled={false} renderOrder={2}>
-      {/* Filled disc. Plane in heliocentric XZ — the ecliptic / orbit plane. */}
+      {/* Filled disc. Plane mesh laid flat in the heliocentric XZ plane
+          (the plane the orbits live in), so it tilts with the frame. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} frustumCulled={false}>
         <planeGeometry args={[ECL_OUTER * 2.05, ECL_OUTER * 2.05]} />
         <primitive object={discMaterial} attach="material" />
@@ -196,9 +186,12 @@ export function EclipticDisc() {
 }
 
 /**
- * Galactic plane reference — XZ loop; transform lives on `GalacticReferenceShell`.
+ * Galactic plane reference ring. Renders in *world* space, anchored
+ * to the Sun — never tilts, so the contrast against the tilted
+ * ecliptic is unambiguous.
  */
 export function GalacticPlaneRing() {
+  const groupRef = useRef<THREE.Group>(null);
   const ringMatRef = useRef<THREE.LineBasicMaterial>(null);
   const labelRef = useRef<HTMLDivElement>(null);
 
@@ -221,18 +214,27 @@ export function GalacticPlaneRing() {
   useFrame(() => {
     const reveal = galacticState.revealT;
     const eased = reveal * reveal * (3 - 2 * reveal);
+
+    if (groupRef.current) {
+      const sun = bodyPositions.get("sun");
+      if (sun) groupRef.current.position.copy(sun);
+    }
     if (ringMatRef.current) ringMatRef.current.opacity = 0.22 * eased;
     if (labelRef.current) {
       labelRef.current.style.opacity = (0.78 * eased).toFixed(3);
     }
   });
 
-  // Local +X on the (pre-rotation) XZ ring so the “Galactic plane”
-  // tag sits on the ring edge; the parent group carries the 60° tilt.
-  const labelPosition: [number, number, number] = [GAL_RADIUS * 1.015, 0, 0];
+  // Label sits along the tilt-axis direction at the galactic-plane
+  // radius — roughly 90° from the motion-axis label, so the two
+  // world-space labels never crowd each other regardless of camera.
+  const labelPosition = useMemo<[number, number, number]>(() => {
+    const a = galacticState.tiltAxis;
+    return [a.x * GAL_RADIUS * 1.015, 0, a.z * GAL_RADIUS * 1.015];
+  }, []);
 
   return (
-    <group frustumCulled={false} renderOrder={2}>
+    <group ref={groupRef} frustumCulled={false} renderOrder={2}>
       <lineLoop frustumCulled={false}>
         <primitive object={ringGeometry} attach="geometry" />
         <lineBasicMaterial

@@ -24,12 +24,8 @@ import {
  * can glance at this line and know instantly which way the Sun is moving
  * — that's what turns the helix from "messy swirl" into "structured
  * motion".
- *
- * If `useParentTransform` is set, the line stays at local origin and
- * `GalacticReferenceShell` provides Sun position + ecliptic–galactic
- * tilt so the axis remains in the same plane as the reference ring.
  */
-export function MotionAxis({ useParentTransform = false }: { useParentTransform?: boolean }) {
+export function MotionAxis() {
   const materialRef = useRef<THREE.LineBasicMaterial>(null);
   const groupRef = useRef<THREE.Group>(null);
   const tipRef = useRef<THREE.Mesh>(null);
@@ -62,7 +58,7 @@ export function MotionAxis({ useParentTransform = false }: { useParentTransform?
     const reveal = galacticState.revealT;
     const eased = reveal * reveal * (3 - 2 * reveal);
 
-    if (!useParentTransform && groupRef.current) {
+    if (groupRef.current) {
       const sun = bodyPositions.get("sun");
       if (sun) groupRef.current.position.copy(sun);
     }

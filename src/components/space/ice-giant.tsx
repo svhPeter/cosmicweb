@@ -81,8 +81,11 @@ function makeIceGiantMaterial(sunWorld: THREE.Vector3, albedo: THREE.Texture, ba
         vUv = uv;
         vec4 wp = modelMatrix * vec4(position, 1.0);
         vWorldPos = wp.xyz;
-        vWorldNormal = normalize(mat3(modelMatrix) * normal);
-        gl_Position = projectionMatrix * viewMatrix * wp;
+        // Use the normal matrix (handles non-uniform scale) — also tends to be
+        // more driver-stable on mobile GPUs than mat3(modelMatrix).
+        vWorldNormal = normalize(normalMatrix * normal);
+        // Standard clip transform (avoids driver quirks around viewMatrix * worldPos).
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
     fragmentShader: /* glsl */ `

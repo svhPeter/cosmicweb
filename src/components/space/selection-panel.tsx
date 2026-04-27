@@ -194,10 +194,10 @@ export function SelectionPanel() {
                   left: "auto",
                 }
               : {
-                  left: 0,
-                  right: 0,
-                  marginLeft: "max(0.5rem, env(safe-area-inset-left, 0px))",
-                  marginRight: "max(0.5rem, env(safe-area-inset-right, 0px))",
+                  // Use explicit insets (not margins) so the visual card
+                  // and the hit-test box match on mobile browsers.
+                  left: "max(0.5rem, env(safe-area-inset-left, 0px))",
+                  right: "max(0.5rem, env(safe-area-inset-right, 0px))",
                   bottom: BOTTOM_SHEET_ABOVE_CONTROLS,
                   top: "auto",
                   maxWidth: "100%",

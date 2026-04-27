@@ -100,7 +100,9 @@ export const useExploreStore = create<ExploreState>((set) => ({
   speed: 1,
   scaleMode: "visual",
   simulationJd: jdNow(),
-  useRealOrbits: false,
+  // Default to astronomy-consistent positions (Kepler solver) rather than
+  // the stylised circular layout.
+  useRealOrbits: true,
   galactic: false,
   earthMoonScaleMode: false,
 

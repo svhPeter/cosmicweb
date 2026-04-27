@@ -130,16 +130,8 @@ export function Planet({
     const sunPos = bodyPositions.get("sun");
     if (sunPos) sunWorld.copy(sunPos);
 
-    // Advance simulation clock — centralised in the store is unnecessary
-    // per-frame overhead. We use `playing` + `speed` for local motion and
-    // the store's simulationJd for realistic-mode date read-outs.
     if (useRealOrbits && body.orbitalElements) {
       const s = useExploreStore.getState();
-      if (playing) {
-        // 1 real second = `speed` days of simulation by default, so the
-        // inner planets move visibly without outer planets appearing frozen.
-        s.setSimulationJd(s.simulationJd + delta * speed * 1.0);
-      }
       const pos = heliocentricPosition(body.orbitalElements, s.simulationJd);
       // Axis mapping: ecliptic (x, y, z) → scene (x, z, -y) so the ecliptic
       // lies on the XZ plane, matching the stylised layout.

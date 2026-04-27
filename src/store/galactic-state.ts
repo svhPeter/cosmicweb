@@ -62,15 +62,6 @@ import * as THREE from "three";
  */
 export const ECLIPTIC_TO_GALAXY_DEG = 60.2;
 
-export const galacticState = {
-  revealT: 0,
-  drift: new THREE.Vector3(),
-  motionDir: new THREE.Vector3(0.92, 0, 0.39).normalize(),
-  tiltAxis: new THREE.Vector3(0.39, 0, -0.92).normalize(),
-  tiltAngleRad: (Math.PI / 180) * ECLIPTIC_TO_GALAXY_DEG,
-  driftSpeed: 2.2,
-};
-
 /**
  * Real galactic-orbital velocity of the Sun around the Milky Way's
  * centre. Single source of truth — every other unit is derived from
@@ -80,15 +71,25 @@ export const galacticState = {
  * The canonical figure is ≈ 230 km/s ≈ 828,000 km/h ≈ 514,000 mph — the
  * same numbers quoted in NASA educational materials and every serious
  * popular-science treatment of the solar system's galactic motion.
- *
- * Note: this is *not* used to drive any animation. Drift speed above is
- * tuned for readable helix pitch, not to-scale realism — a to-scale
- * representation is not visually useful inside a ~100-unit scene.
  */
 export const SUN_GALACTIC_SPEED_KM_S = 230;
 export const SUN_GALACTIC_SPEED_KM_H = SUN_GALACTIC_SPEED_KM_S * 3600;     // 828,000
 export const SUN_GALACTIC_SPEED_MI_S = SUN_GALACTIC_SPEED_KM_S / 1.609344; // ≈ 143
 export const SUN_GALACTIC_SPEED_MPH = SUN_GALACTIC_SPEED_KM_H / 1.609344;  // ≈ 514,496
+
+export const galacticState = {
+  revealT: 0,
+  drift: new THREE.Vector3(),
+  motionDir: new THREE.Vector3(0.92, 0, 0.39).normalize(),
+  tiltAxis: new THREE.Vector3(0.39, 0, -0.92).normalize(),
+  tiltAngleRad: (Math.PI / 180) * ECLIPTIC_TO_GALAXY_DEG,
+  /** Scene units per AU — must match the explore scene's AU scale. */
+  auToScene: 4.2,
+  /** Canonical Sun galactic speed used for drift integration. */
+  sunSpeedKmS: SUN_GALACTIC_SPEED_KM_S,
+  // Legacy visual speed (kept for back-compat; no longer used for drift).
+  driftSpeed: 2.2,
+};
 
 /**
  * Back-compat alias for the old km/h export. Kept so any external

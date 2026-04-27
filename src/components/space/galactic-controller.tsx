@@ -6,6 +6,7 @@ import * as THREE from "three";
 
 import { useExploreStore } from "@/store/explore-store";
 import { galacticState } from "@/store/galactic-state";
+import { AU_KM, SECONDS_PER_DAY } from "@/data-platform/physics/constants";
 
 interface Props {
   /** The heliocentric frame group — Sun + planets + orbit rings live here. */
@@ -51,9 +52,19 @@ export function GalacticController({ groupRef, sunDriftRef }: Props) {
     // the galactic drift halts here. Skipping accumulation is enough;
     // the group stays at its current translation.
     if (galactic && playing) {
+      // Astronomy-consistent drift: the Sun's ~230 km/s galactic motion,
+      // converted to AU/day and then to scene-units via `auToScene`.
+      //
+      // Convention: simulation time advances at `speed` days per real second
+      // (see `SimulationTimeController`). So drift must use the same mapping.
+      const speedDaysPerSec = useExploreStore.getState().speed;
+      const dtDays = delta * speedDaysPerSec * 1.0;
+      const dtSec = dtDays * SECONDS_PER_DAY;
+      const driftAu = (galacticState.sunSpeedKmS * dtSec) / AU_KM;
+      const driftScene = driftAu * galacticState.auToScene;
       galacticState.drift.addScaledVector(
         galacticState.motionDir,
-        galacticState.driftSpeed * galacticState.revealT * delta
+        driftScene * galacticState.revealT
       );
     } else if (!galactic && galacticState.drift.lengthSq() > 1e-6) {
       // Ease back toward origin so the scene returns to its canonical pose.

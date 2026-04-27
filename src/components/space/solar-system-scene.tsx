@@ -14,6 +14,7 @@ import { Sun } from "@/components/space/sun";
 import { Planet } from "@/components/space/planet";
 import { CameraController } from "@/components/space/camera-controller";
 import { GalacticController } from "@/components/space/galactic-controller";
+import { SimulationTimeController } from "@/components/space/simulation-time-controller";
 import { GalacticDust } from "@/components/space/galactic-dust";
 import { PlanetTrails } from "@/components/space/planet-trails";
 import { MotionAxis } from "@/components/space/motion-axis";
@@ -60,6 +61,8 @@ export function SolarSystemScene({
 }) {
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const [highPerf, setHighPerf] = useState(true);
+  // For astronomy-consistent visuals we always use the Kepler solver when
+  // elements exist. (UI toggle remains, but the scene defaults to truth.)
   const useRealOrbits = useExploreStore((s) => s.useRealOrbits);
   const earthMoonScaleMode = useExploreStore((s) => s.earthMoonScaleMode);
   const tier = useDeviceTier();
@@ -127,6 +130,7 @@ export function SolarSystemScene({
         <hemisphereLight args={["#d0d8e6", "#0a0e1a", 0.24]} />
 
         <Suspense fallback={null}>
+          <SimulationTimeController />
           <SpaceEnvironment />
           {/* Three parallax layers. Bright/sparse near → dim/dense far. */}
           <Starfield count={starCountFar} radius={640} />
@@ -146,9 +150,11 @@ export function SolarSystemScene({
 
             {planets.map((body, i) => {
               const visualRadius = body.render.orbitAu * ORBIT_SCALE;
+              // Physically consistent angular speed: 2π per sidereal period,
+              // expressed in rad/day and then multiplied by (days/sec)=speed in Planet.
               const visualSpeed = body.render.orbitalPeriodYears
-                ? 0.12 / Math.sqrt(body.render.orbitalPeriodYears)
-                : 0.04;
+                ? (2 * Math.PI) / (body.render.orbitalPeriodYears * 365.25)
+                : (2 * Math.PI) / 365.25;
               const visualPhase = (i / planets.length) * Math.PI * 2 + i * 0.37;
               const realisticRadius = body.orbitalElements
                 ? body.orbitalElements.semiMajorAxisAu * AU_TO_SCENE

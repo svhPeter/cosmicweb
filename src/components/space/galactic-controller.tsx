@@ -96,7 +96,7 @@ export function GalacticController({ groupRef, sunDriftRef, auToScene }: Props) 
     }
 
     // Publish Sun drift so the camera can follow without re-reading state.
-    sunDriftRef.current.copy(galacticState.drift);
+    sunDriftRef.current?.copy(galacticState.drift);
   });
 
   return null;

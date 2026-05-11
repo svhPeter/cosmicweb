@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
 import {
   ChevronLeft,
   Sparkles,
@@ -23,12 +22,7 @@ import {
 import { orbitalSpeedKmS } from "@/lib/space/speeds";
 import { formatNumber } from "@/lib/utils";
 
-interface ExploreHudProps {
-  onToggleSidebar?: () => void;
-  sidebarOpen?: boolean;
-}
-
-export function ExploreHud(_props: ExploreHudProps = {}) {
+export function ExploreHud() {
   // Concepts chips were intentionally removed from /explore; keep the
   // observatory surface focused and touch-safe.
 
@@ -70,7 +64,9 @@ export function ExploreHud(_props: ExploreHudProps = {}) {
     `The planetary orbital plane is inclined ~${ECLIPTIC_TO_GALAXY_DEG}° to the Sun's ` +
     `galactic motion vector, which is why every planet traces a helix behind it, ` +
     `not a flat circle. Drift speed shown in the scene is visually tuned for ` +
-    `readability, not to scale.`;
+    `readability, not to scale. ` +
+    `Pause freezes both Julian-date time and galactic drift. ` +
+    `Helical trails need Play, Galactic on, and the frame transition (reveal) nearly complete.`;
 
   return (
     <>

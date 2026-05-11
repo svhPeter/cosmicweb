@@ -5,7 +5,8 @@ export const site = {
     "Explore the Solar System in 3D, study planets with NASA-grounded data, and compare size, gravity and time across worlds. An editorial platform for space lovers, students, and the endlessly curious.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://cosmos.example",
   twitter: "@cosmos",
-  ogImage: "/og/cosmos.png",
+  /** Ship a real file under `public/` — crawlers 404 if this path is missing. */
+  ogImage: "/textures/earth/earth_day_2048.jpg",
 } as const;
 
 export const navigation = [

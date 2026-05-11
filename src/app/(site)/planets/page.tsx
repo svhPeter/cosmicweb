@@ -4,7 +4,12 @@ import Link from "next/link";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { PlanetCard } from "@/components/content/planet-card";
 import { Button } from "@/components/ui/button";
-import { bodies, planets } from "@/data-static/bodies";
+import { bodies } from "@/data-static/bodies";
+
+/** Bodies shown on the grid: planets, dwarf planets, and Earth's Moon (first-class detail page). */
+const PLANET_GRID_BODIES = bodies.filter(
+  (b) => b.type === "planet" || b.type === "dwarf_planet" || b.type === "moon"
+);
 
 export const metadata: Metadata = {
   title: "Planets",
@@ -57,7 +62,7 @@ export default function PlanetsIndexPage() {
       ) : null}
 
       <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {planets.map((p) => (
+        {PLANET_GRID_BODIES.map((p) => (
           <PlanetCard key={p.id} body={p} />
         ))}
       </div>

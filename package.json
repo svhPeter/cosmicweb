@@ -7,7 +7,7 @@
     "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint eslint.config.mjs src/lib/use-device-tier.ts src/app/layout.tsx src/lib/site.ts src/app/explore/experience.tsx src/components/space/explore-debug-overlay.tsx src/components/space/galactic-controller.tsx src/components/space/planet.tsx src/components/space/time-control-bar.tsx src/components/space/explore-hud.tsx",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

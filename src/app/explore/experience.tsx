@@ -12,6 +12,7 @@ import { ExploreSidebar } from "@/components/space/explore-sidebar";
 import { SelectionPanel } from "@/components/space/selection-panel";
 import { SceneErrorBoundary } from "@/components/space/scene-error-boundary";
 import { ExploreLoader } from "@/components/space/explore-loader";
+import { ExploreDebugOverlay } from "@/components/space/explore-debug-overlay";
 
 /**
  * The 3D scene is the heaviest module in the app (three.js + r3f + drei
@@ -35,6 +36,7 @@ export default function Experience() {
   const [introActive, setIntroActive] = useState(false);
   const searchParams = useSearchParams();
   const focusParam = searchParams.get("focus");
+  const exploreDebug = searchParams.get("exploreDebug") === "1";
   const focusBody = useMemo(
     () => (focusParam ? getBodyBySlug(focusParam) : undefined),
     [focusParam]
@@ -65,6 +67,7 @@ export default function Experience() {
 
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden bg-background">
+      {exploreDebug ? <ExploreDebugOverlay /> : null}
       <SceneErrorBoundary>
         <SolarSystemScene
           onIntroActiveChange={setIntroActive}
@@ -79,7 +82,7 @@ export default function Experience() {
                     : "translate-y-0 opacity-100",
                 ].join(" ")}
               >
-                <ExploreHud onToggleSidebar={() => setSidebarOpen((v) => !v)} sidebarOpen={sidebarOpen} />
+                <ExploreHud />
               </div>
 
               {/* Backdrop — tap/click outside closes; lighter on large screens. */}

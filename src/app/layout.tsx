@@ -69,7 +69,7 @@ export const metadata: Metadata = {
     siteName: site.name,
     title: `${site.name} — ${site.tagline}`,
     description: site.description,
-    images: [{ url: site.ogImage, width: 1200, height: 630, alt: site.name }],
+    images: [{ url: site.ogImage, width: 2048, height: 1024, alt: site.name }],
   },
   twitter: {
     card: "summary_large_image",

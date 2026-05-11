@@ -17,8 +17,13 @@ export function generateStaticParams() {
   return bodies.map((b) => ({ slug: b.slug }));
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const body = getBodyBySlug(params.slug);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const body = getBodyBySlug(slug);
   if (!body) return { title: "Planet not found" };
   return {
     title: body.name,
@@ -30,8 +35,9 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   };
 }
 
-export default function PlanetDetailPage({ params }: { params: { slug: string } }) {
-  const body = getBodyBySlug(params.slug);
+export default async function PlanetDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const body = getBodyBySlug(slug);
   if (!body) notFound();
 
   const idx = bodies.findIndex((b) => b.slug === body.slug);

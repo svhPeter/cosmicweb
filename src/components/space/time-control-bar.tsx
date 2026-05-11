@@ -100,7 +100,12 @@ export function TimeControlBar({ className }: { className?: string }) {
         type="button"
         onClick={togglePlaying}
         className="inline-flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-foreground text-background transition hover:bg-foreground/90 touch-manipulation"
-        aria-label={playing ? "Pause" : "Play"}
+        aria-label={playing ? "Pause — freezes simulation time and galactic drift" : "Play"}
+        title={
+          playing
+            ? "Pause — freezes Julian-date time and galactic drift together (intended behaviour)"
+            : "Play — advances simulation time; galactic drift runs only when Galactic is on"
+        }
       >
         {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
       </button>
@@ -151,8 +156,8 @@ export function TimeControlBar({ className }: { className?: string }) {
         )}
         title={
           galactic
-            ? "Galactic frame: the Sun drifts through the Milky Way and the planets trace helices"
-            : "Switch to the galactic frame of reference"
+            ? "Galactic frame: Sun drifts through the Milky Way; helices need Play + reveal. Pause freezes drift too."
+            : "Switch to the galactic frame of reference (helices appear with Play after the tilt reveal)"
         }
       >
         <Sparkles className="h-3 w-3" />

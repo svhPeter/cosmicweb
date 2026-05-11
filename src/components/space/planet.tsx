@@ -26,6 +26,9 @@ import { Pluto } from "@/components/space/pluto";
  * geometry in the scene graph, no raycaster cross-talk with the custom
  * renderer's pointer handlers.
  */
+/** Dev-only: one log per body when Kepler mode is on but elements are absent. */
+const missingOrbitalElementsWarned = new Set<string>();
+
 const HAS_CUSTOM_RENDERER: ReadonlySet<string> = new Set([
   "earth",
   "mars",
@@ -141,6 +144,19 @@ export function Planet({
         -pos.y * auToSceneUnits
       );
     } else {
+      if (
+        process.env.NODE_ENV === "development" &&
+        useRealOrbits &&
+        !body.orbitalElements &&
+        (body.type === "planet" || body.type === "dwarf_planet")
+      ) {
+        if (!missingOrbitalElementsWarned.has(body.id)) {
+          missingOrbitalElementsWarned.add(body.id);
+          console.warn(
+            `[Cosmos/explore] Real orbits on but "${body.id}" has no orbitalElements — using the stylised circular path.`
+          );
+        }
+      }
       if (playing) {
         visualAngle.current += delta * visualAngularSpeed * speed;
       }
